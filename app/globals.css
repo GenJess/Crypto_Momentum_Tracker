@@ -1,0 +1,61 @@
+@layer base {
+  :root {
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+
+    /* Dracula/Kraken Pro Colors */
+    --bg-primary: #1a1b23;
+    --bg-secondary: #21222d;
+    --bg_tertiary: #2a2d3a;
+    --bg-card: #252631;
+    --border-primary: #3a3d4a;
+    --border-secondary: #4a4d5a;
+
+    --text-primary: #f8f8f2;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+
+    --accent-purple: #8b5cf6;
+    --accent-purple-hover: #7c3aed;
+    --accent-purple-light: rgba(139, 92, 246, 0.1);
+
+    --green: #10b981;
+    --green-light: rgba(16, 185, 129, 0.1);
+    --red: #ef4444;
+    --red-light: rgba(239, 68, 68, 0.1);
+
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --orange: #f97316;
+  }
+
+  * {
+    border-color: var(--border-primary);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+}
