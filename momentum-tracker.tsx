@@ -12,7 +12,6 @@ import {
   TrendingDown,
   Zap,
   Clock,
-  Target,
   Activity,
   BarChart3,
   List,
@@ -20,21 +19,26 @@ import {
   ChevronUp,
   ChevronDown,
   Star,
+  Trophy,
+  Flag,
+  Pause,
 } from "lucide-react"
 
 // Types
 interface CoinData {
-  id: string // Unique identifier
+  id: string
   symbol: string
   name: string
   currentPrice: number
   startPrice: number
   changesSinceStart: number
+  normalizedPrice: number
   dailyChange: number
   change5min: number
   rateOfChange: number
   lastUpdated: number
   priceHistory: Array<{ price: number; timestamp: number; changesSinceStart: number }>
+  racePosition: number
 }
 
 interface WatchlistData {
@@ -44,6 +48,7 @@ interface WatchlistData {
 
 type SortField = "changesSinceStart" | "rateOfChange" | "dailyChange" | "currentPrice"
 type SortDirection = "asc" | "desc"
+type TimeFrame = "1min" | "5min" | "15min" | "1h" | "1d"
 
 // Mock WebSocket data for preview
 const MOCK_COINS = [
@@ -57,14 +62,74 @@ const MOCK_COINS = [
   { symbol: "LINKUSDT", name: "Chainlink", basePrice: 14.23 },
 ]
 
+// Coin colors for race chart
+const COIN_COLORS = [
+  "#8b5cf6", // Purple
+  "#10b981", // Green
+  "#f59e0b", // Yellow
+  "#ef4444", // Red
+  "#3b82f6", // Blue
+  "#f97316", // Orange
+  "#ec4899", // Pink
+  "#06b6d4", // Cyan
+]
+
 // Generate unique ID for coins
 const generateCoinId = (symbol: string) => `${symbol}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-// Enhanced WebSocket Hook with proper connection management
-const useWebSocket = (symbols: string[]) => {
+// Debounce utility
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: NodeJS.Timeout
+  return ((...args: any[]) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func.apply(null, args), wait)
+  }) as T
+}
+
+// Throttle utility
+function throttle<T extends (...args: any[]) => any>(func: T, limit: number): T {
+  let inThrottle: boolean
+  return ((...args: any[]) => {
+    if (!inThrottle) {
+      func.apply(null, args)
+      inThrottle = true
+      setTimeout(() => (inThrottle = false), limit)
+    }
+  }) as T
+}
+
+// Enhanced WebSocket Hook with debouncing/throttling
+const useWebSocket = (symbols: string[], timeFrame: TimeFrame) => {
   const [data, setData] = useState<Map<string, number>>(new Map())
   const intervalRef = useRef<NodeJS.Timeout>()
   const lastUpdateRef = useRef<Map<string, number>>(new Map())
+
+  // Get update interval based on timeframe
+  const getUpdateInterval = (tf: TimeFrame): number => {
+    switch (tf) {
+      case "1min":
+        return 200 // 200ms for smooth 1min updates
+      case "5min":
+        return 500 // 500ms for 5min
+      case "15min":
+        return 1000 // 1s for 15min
+      case "1h":
+        return 2000 // 2s for 1h
+      case "1d":
+        return 5000 // 5s for 1d
+      default:
+        return 250
+    }
+  }
+
+  // Throttled update function for smooth price movements
+  const throttledUpdate = useMemo(
+    () =>
+      throttle((newData: Map<string, number>) => {
+        setData(newData)
+      }, 100), // Max 10 updates per second
+    [],
+  )
 
   useEffect(() => {
     if (symbols.length === 0) {
@@ -83,29 +148,34 @@ const useWebSocket = (symbols: string[]) => {
       }
     })
 
+    const updateInterval = getUpdateInterval(timeFrame)
+
     // Mock WebSocket with realistic price movements
     intervalRef.current = setInterval(() => {
       const newData = new Map()
       symbols.forEach((symbol) => {
         const mockCoin = MOCK_COINS.find((c) => c.symbol === symbol)
         if (mockCoin) {
-          // Generate realistic price movement
-          const volatility = symbol.includes("DOGE") ? 0.02 : symbol.includes("BTC") ? 0.005 : 0.01
+          // Generate realistic price movement based on timeframe
+          const volatilityMultiplier = timeFrame === "1min" ? 0.3 : timeFrame === "5min" ? 0.5 : 1
+          const volatility =
+            (symbol.includes("DOGE") ? 0.015 : symbol.includes("BTC") ? 0.003 : 0.008) * volatilityMultiplier
+
           const change = (Math.random() - 0.5) * volatility
           const currentPrice = lastUpdateRef.current.get(symbol) || mockCoin.basePrice
-          const newPrice = Math.max(currentPrice * (1 + change), mockCoin.basePrice * 0.8)
+          const newPrice = Math.max(currentPrice * (1 + change), mockCoin.basePrice * 0.85)
 
           lastUpdateRef.current.set(symbol, newPrice)
           newData.set(symbol, newPrice)
         }
       })
-      setData(newData)
-    }, 250)
+      throttledUpdate(newData)
+    }, updateInterval)
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [symbols.join(",")]) // Re-run when symbols change
+  }, [symbols.join(","), timeFrame, throttledUpdate])
 
   return data
 }
@@ -146,13 +216,144 @@ const formatPercentage = (pct: number): string => {
   return `${pct >= 0 ? "+" : ""}${pct.toFixed(3)}%`
 }
 
-// Enhanced Chart Component
-function MomentumChart({ coin, startTime }: { coin: CoinData; startTime: number | null }) {
+// Enhanced Race Chart Component
+function RaceChart({
+  coins,
+  startTime,
+  timeFrame,
+}: { coins: CoinData[]; startTime: number | null; timeFrame: TimeFrame }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number>()
+
+  const smoothChartUpdate = useCallback(
+    (ctx: CanvasRenderingContext2D, rect: DOMRect) => {
+      if (!startTime || coins.length === 0) return
+
+      // Clear canvas
+      ctx.clearRect(0, 0, rect.width, rect.height)
+
+      const padding = 40
+      const chartWidth = rect.width - padding * 2
+      const chartHeight = rect.height - padding * 2
+
+      // Get all normalized prices for bounds calculation
+      const allNormalizedPrices = coins.flatMap((coin) =>
+        coin.priceHistory.filter((p) => p.timestamp >= startTime).map((p) => p.changesSinceStart),
+      )
+
+      if (allNormalizedPrices.length === 0) return
+
+      const minChange = Math.min(...allNormalizedPrices, -1)
+      const maxChange = Math.max(...allNormalizedPrices, 1)
+      const changeRange = Math.max(maxChange - minChange, 2)
+
+      // Draw grid lines
+      ctx.strokeStyle = "#374151"
+      ctx.lineWidth = 0.5
+      ctx.setLineDash([2, 2])
+
+      // Horizontal grid lines
+      const gridLevels = 6
+      for (let i = 0; i <= gridLevels; i++) {
+        const y = padding + (i / gridLevels) * chartHeight
+        ctx.beginPath()
+        ctx.moveTo(padding, y)
+        ctx.lineTo(padding + chartWidth, y)
+        ctx.stroke()
+
+        // Y-axis labels
+        const changeValue = maxChange - (i / gridLevels) * changeRange
+        ctx.fillStyle = "#9ca3af"
+        ctx.font = "10px monospace"
+        ctx.textAlign = "right"
+        ctx.fillText(`${changeValue.toFixed(1)}%`, padding - 5, y + 3)
+      }
+
+      // Draw zero line
+      const zeroY = padding + ((maxChange - 0) / changeRange) * chartHeight
+      ctx.setLineDash([])
+      ctx.strokeStyle = "#6b7280"
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(padding, zeroY)
+      ctx.lineTo(padding + chartWidth, zeroY)
+      ctx.stroke()
+
+      // Draw race lines for each coin
+      coins.forEach((coin, index) => {
+        const chartData = coin.priceHistory.filter((p) => p.timestamp >= startTime)
+        if (chartData.length < 2) return
+
+        const color = COIN_COLORS[index % COIN_COLORS.length]
+        ctx.strokeStyle = color
+        ctx.lineWidth = 2.5
+        ctx.setLineDash([])
+
+        // Draw main line
+        ctx.beginPath()
+        chartData.forEach((point, pointIndex) => {
+          const x = padding + (pointIndex / (chartData.length - 1)) * chartWidth
+          const y = padding + ((maxChange - point.changesSinceStart) / changeRange) * chartHeight
+
+          if (pointIndex === 0) {
+            ctx.moveTo(x, y)
+          } else {
+            ctx.lineTo(x, y)
+          }
+        })
+        ctx.stroke()
+
+        // Add glow effect
+        ctx.shadowColor = color
+        ctx.shadowBlur = 3
+        ctx.stroke()
+        ctx.shadowBlur = 0
+
+        // Draw current position dot
+        if (chartData.length > 0) {
+          const lastPoint = chartData[chartData.length - 1]
+          const x = padding + chartWidth
+          const y = padding + ((maxChange - lastPoint.changesSinceStart) / changeRange) * chartHeight
+
+          ctx.fillStyle = color
+          ctx.beginPath()
+          ctx.arc(x, y, 4, 0, 2 * Math.PI)
+          ctx.fill()
+
+          // Add coin label
+          ctx.fillStyle = "#ffffff"
+          ctx.font = "12px monospace"
+          ctx.textAlign = "left"
+          ctx.fillText(coin.symbol, x + 8, y + 4)
+        }
+      })
+
+      // Time axis labels
+      if (coins.length > 0 && coins[0].priceHistory.length > 0) {
+        const firstCoinData = coins[0].priceHistory.filter((p) => p.timestamp >= startTime)
+        if (firstCoinData.length > 0) {
+          const timeRange = firstCoinData[firstCoinData.length - 1].timestamp - firstCoinData[0].timestamp
+          const timeGridLines = 4
+
+          for (let i = 0; i <= timeGridLines; i++) {
+            const x = padding + (i / timeGridLines) * chartWidth
+            const timeValue = firstCoinData[0].timestamp + (i / timeGridLines) * timeRange
+            const timeLabel = new Date(timeValue).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+
+            ctx.fillStyle = "#9ca3af"
+            ctx.font = "10px monospace"
+            ctx.textAlign = "center"
+            ctx.fillText(timeLabel, x, padding + chartHeight + 15)
+          }
+        }
+      }
+    },
+    [coins, startTime],
+  )
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || !coin || !startTime) return
+    if (!canvas) return
 
     const ctx = canvas.getContext("2d")
     if (!ctx) return
@@ -164,126 +365,27 @@ function MomentumChart({ coin, startTime }: { coin: CoinData; startTime: number 
     canvas.height = rect.height * dpr
     ctx.scale(dpr, dpr)
 
-    // Clear canvas
-    ctx.clearRect(0, 0, rect.width, rect.height)
-
-    // Filter data since start time
-    const chartData = coin.priceHistory.filter((p) => p.timestamp >= startTime)
-    if (chartData.length < 2) return
-
-    const padding = 40
-    const chartWidth = rect.width - padding * 2
-    const chartHeight = rect.height - padding * 2
-
-    // Calculate bounds
-    const minChange = Math.min(...chartData.map((d) => d.changesSinceStart))
-    const maxChange = Math.max(...chartData.map((d) => d.changesSinceStart))
-    const changeRange = Math.max(maxChange - minChange, 0.1) // Minimum range
-
-    const timeRange = chartData[chartData.length - 1].timestamp - chartData[0].timestamp
-
-    // Draw grid lines
-    ctx.strokeStyle = "#374151"
-    ctx.lineWidth = 0.5
-    ctx.setLineDash([2, 2])
-
-    // Horizontal grid lines (percentage levels)
-    const gridLevels = 5
-    for (let i = 0; i <= gridLevels; i++) {
-      const y = padding + (i / gridLevels) * chartHeight
-      ctx.beginPath()
-      ctx.moveTo(padding, y)
-      ctx.lineTo(padding + chartWidth, y)
-      ctx.stroke()
-
-      // Y-axis labels
-      const changeValue = maxChange - (i / gridLevels) * changeRange
-      ctx.fillStyle = "#9ca3af"
-      ctx.font = "10px monospace"
-      ctx.textAlign = "right"
-      ctx.fillText(`${changeValue.toFixed(2)}%`, padding - 5, y + 3)
+    // Smooth animation loop
+    const animate = () => {
+      smoothChartUpdate(ctx, rect)
+      animationRef.current = requestAnimationFrame(animate)
     }
 
-    // Vertical grid lines (time)
-    const timeGridLines = 4
-    for (let i = 0; i <= timeGridLines; i++) {
-      const x = padding + (i / timeGridLines) * chartWidth
-      ctx.beginPath()
-      ctx.moveTo(x, padding)
-      ctx.lineTo(x, padding + chartHeight)
-      ctx.stroke()
+    animate()
 
-      // X-axis labels
-      const timeValue = chartData[0].timestamp + (i / timeGridLines) * timeRange
-      const timeLabel = new Date(timeValue).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      ctx.fillStyle = "#9ca3af"
-      ctx.font = "10px monospace"
-      ctx.textAlign = "center"
-      ctx.fillText(timeLabel, x, padding + chartHeight + 15)
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
     }
+  }, [smoothChartUpdate])
 
-    // Draw zero line
-    const zeroY = padding + ((maxChange - 0) / changeRange) * chartHeight
-    ctx.setLineDash([])
-    ctx.strokeStyle = "#6b7280"
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    ctx.moveTo(padding, zeroY)
-    ctx.lineTo(padding + chartWidth, zeroY)
-    ctx.stroke()
-
-    // Draw price line
-    ctx.setLineDash([])
-    ctx.strokeStyle = coin.changesSinceStart >= 0 ? "#10b981" : "#ef4444"
-    ctx.lineWidth = 2
-    ctx.beginPath()
-
-    chartData.forEach((point, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth
-      const y = padding + ((maxChange - point.changesSinceStart) / changeRange) * chartHeight
-
-      if (index === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-
-    ctx.stroke()
-
-    // Add glow effect
-    ctx.shadowColor = coin.changesSinceStart >= 0 ? "#10b981" : "#ef4444"
-    ctx.shadowBlur = 4
-    ctx.stroke()
-    ctx.shadowBlur = 0
-
-    // Draw area fill
-    ctx.globalAlpha = 0.1
-    ctx.fillStyle = coin.changesSinceStart >= 0 ? "#10b981" : "#ef4444"
-    ctx.beginPath()
-    chartData.forEach((point, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth
-      const y = padding + ((maxChange - point.changesSinceStart) / changeRange) * chartHeight
-
-      if (index === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-    ctx.lineTo(padding + chartWidth, zeroY)
-    ctx.lineTo(padding, zeroY)
-    ctx.closePath()
-    ctx.fill()
-    ctx.globalAlpha = 1
-  }, [coin, startTime])
-
-  if (!coin || !startTime) {
+  if (!startTime || coins.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-gray-400">
         <div className="text-center">
-          <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-sm">Select a coin to view momentum chart</p>
+          <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p className="text-sm">Start a race to see the momentum chart</p>
         </div>
       </div>
     )
@@ -292,6 +394,129 @@ function MomentumChart({ coin, startTime }: { coin: CoinData; startTime: number 
   return (
     <div className="h-full">
       <canvas ref={canvasRef} className="w-full h-full" style={{ width: "100%", height: "100%" }} />
+    </div>
+  )
+}
+
+// Live Race Leaderboard Component
+function RaceLeaderboard({ coins, isRaceMode }: { coins: CoinData[]; isRaceMode: boolean }) {
+  if (!isRaceMode || coins.length === 0) return null
+
+  const sortedCoins = [...coins].sort((a, b) => b.normalizedPrice - a.normalizedPrice)
+
+  return (
+    <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <Trophy className="h-5 w-5 text-yellow-400" />
+        <h3 className="text-lg font-bold text-white">Live Rankings</h3>
+      </div>
+      <div className="space-y-2">
+        {sortedCoins.map((coin, index) => (
+          <div
+            key={coin.id}
+            className={`flex justify-between items-center py-2 px-3 rounded-lg transition-all ${
+              index === 0
+                ? "bg-yellow-500/20 border border-yellow-500/30"
+                : index === 1
+                  ? "bg-gray-500/20 border border-gray-500/30"
+                  : index === 2
+                    ? "bg-orange-500/20 border border-orange-500/30"
+                    : "bg-gray-800/30"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-lg font-bold ${
+                  index === 0
+                    ? "text-yellow-400"
+                    : index === 1
+                      ? "text-gray-400"
+                      : index === 2
+                        ? "text-orange-400"
+                        : "text-gray-500"
+                }`}
+              >
+                #{index + 1}
+              </span>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: COIN_COLORS[coins.indexOf(coin) % COIN_COLORS.length] }}
+                />
+                <span className="font-semibold text-white text-sm">{coin.symbol}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`text-lg font-bold ${coin.normalizedPrice >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {formatPercentage(coin.normalizedPrice)}
+              </span>
+              <div className="text-xs text-gray-400">{coin.rateOfChange.toFixed(2)}%/min</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Time Frame Selector Component
+function TimeFrameSelector({
+  timeFrame,
+  onTimeFrameChange,
+}: { timeFrame: TimeFrame; onTimeFrameChange: (tf: TimeFrame) => void }) {
+  const timeFrameOptions: TimeFrame[] = ["1min", "5min", "15min", "1h", "1d"]
+
+  return (
+    <div className="flex items-center gap-1 bg-[#2a2d3a] rounded-lg p-1">
+      {timeFrameOptions.map((tf) => (
+        <button
+          key={tf}
+          onClick={() => onTimeFrameChange(tf)}
+          className={`px-3 py-1.5 rounded-md text-sm transition-all font-medium ${
+            timeFrame === tf ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+          }`}
+        >
+          {tf}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Race Controls Component
+function RaceControls({
+  isRaceMode,
+  onStartRace,
+  onStopRace,
+  isTracking,
+  coinCount,
+}: {
+  isRaceMode: boolean
+  onStartRace: () => void
+  onStopRace: () => void
+  isTracking: boolean
+  coinCount: number
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      {!isRaceMode ? (
+        <button
+          onClick={onStartRace}
+          disabled={coinCount === 0}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
+        >
+          <Flag className="h-4 w-4" />
+          Start Race (Normalize to 0%)
+        </button>
+      ) : (
+        <button
+          onClick={onStopRace}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-lg transition-all text-sm font-medium"
+        >
+          <Pause className="h-4 w-4" />
+          Stop Race
+        </button>
+      )}
     </div>
   )
 }
@@ -456,40 +681,85 @@ export default function MomentumTracker() {
   const [viewMode, setViewMode] = useState<"table" | "chart">("table")
   const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null)
   const [liveMomentumMode, setLiveMomentumMode] = useState(false)
+  const [isRaceMode, setIsRaceMode] = useState(false)
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>("1min")
 
   // Get symbols for WebSocket subscription
   const symbols = watchlistData.coins.map((coin) => coin.symbol)
-  const priceData = useWebSocket(symbols)
+  const priceData = useWebSocket(symbols, timeFrame)
+
+  // Debounced update function for smooth state updates
+  const debouncedUpdateCoins = useMemo(
+    () =>
+      debounce((updatedCoins: CoinData[]) => {
+        setWatchlistData((prev) => ({
+          ...prev,
+          coins: updatedCoins,
+        }))
+      }, 50),
+    [],
+  )
 
   // Update coin data when new price data arrives
   useEffect(() => {
     if (priceData.size === 0) return
 
+    const updatedCoins = watchlistData.coins.map((coin) => {
+      const newPrice = priceData.get(coin.symbol)
+      if (!newPrice) return coin
+
+      const now = Date.now()
+      const changesSinceStart = calculateChangesSinceStart(newPrice, coin.startPrice)
+      const normalizedPrice = isRaceMode ? changesSinceStart : coin.normalizedPrice
+
+      const newPriceHistory = [
+        ...coin.priceHistory.slice(-100), // Keep last 100 points
+        { price: newPrice, timestamp: now, changesSinceStart },
+      ]
+
+      return {
+        ...coin,
+        currentPrice: newPrice,
+        changesSinceStart,
+        normalizedPrice,
+        rateOfChange: calculateRateOfChange(newPriceHistory),
+        lastUpdated: now,
+        priceHistory: newPriceHistory,
+      }
+    })
+
+    // Update race positions
+    if (isRaceMode) {
+      const sortedByPerformance = [...updatedCoins].sort((a, b) => b.normalizedPrice - a.normalizedPrice)
+      sortedByPerformance.forEach((coin, index) => {
+        coin.racePosition = index + 1
+      })
+    }
+
+    debouncedUpdateCoins(updatedCoins)
+  }, [priceData, watchlistData.coins, isRaceMode, debouncedUpdateCoins])
+
+  const startRace = useCallback(() => {
+    const now = Date.now()
     setWatchlistData((prev) => ({
-      ...prev,
-      coins: prev.coins.map((coin) => {
-        const newPrice = priceData.get(coin.symbol)
-        if (!newPrice) return coin
-
-        const now = Date.now()
-        const changesSinceStart = calculateChangesSinceStart(newPrice, coin.startPrice)
-
-        const newPriceHistory = [
-          ...coin.priceHistory.slice(-100), // Keep last 100 points
-          { price: newPrice, timestamp: now, changesSinceStart },
-        ]
-
-        return {
-          ...coin,
-          currentPrice: newPrice,
-          changesSinceStart,
-          rateOfChange: calculateRateOfChange(newPriceHistory),
-          lastUpdated: now,
-          priceHistory: newPriceHistory,
-        }
-      }),
+      startTime: now,
+      coins: prev.coins.map((coin) => ({
+        ...coin,
+        startPrice: coin.currentPrice,
+        changesSinceStart: 0,
+        normalizedPrice: 0,
+        priceHistory: [{ price: coin.currentPrice, timestamp: now, changesSinceStart: 0 }],
+        racePosition: 1,
+      })),
     }))
-  }, [priceData])
+    setIsTracking(true)
+    setIsRaceMode(true)
+    setViewMode("chart")
+  }, [])
+
+  const stopRace = useCallback(() => {
+    setIsRaceMode(false)
+  }, [])
 
   const markStartTime = useCallback(() => {
     const now = Date.now()
@@ -517,11 +787,13 @@ export default function MomentumTracker() {
         currentPrice,
         startPrice: watchlistData.startTime ? currentPrice : 0,
         changesSinceStart: 0,
+        normalizedPrice: 0,
         dailyChange: (Math.random() - 0.5) * 10, // Mock daily change
         change5min: (Math.random() - 0.5) * 2, // Mock 5min change
         rateOfChange: 0,
         lastUpdated: now,
         priceHistory: [{ price: currentPrice, timestamp: now, changesSinceStart: 0 }],
+        racePosition: 1,
       }
 
       setWatchlistData((prev) => ({
@@ -549,10 +821,13 @@ export default function MomentumTracker() {
         ...coin,
         startPrice: 0,
         changesSinceStart: 0,
+        normalizedPrice: 0,
         priceHistory: [],
+        racePosition: 1,
       })),
     }))
     setIsTracking(false)
+    setIsRaceMode(false)
     setSelectedCoin(null)
   }, [])
 
@@ -637,16 +912,25 @@ export default function MomentumTracker() {
                 </button>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-                    <BarChart3 className="h-4 w-4 text-white" />
+                    {isRaceMode ? (
+                      <Flag className="h-4 w-4 text-white" />
+                    ) : (
+                      <BarChart3 className="h-4 w-4 text-white" />
+                    )}
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-white">Chart View</h1>
-                    <p className="text-xs text-gray-400">Momentum visualization</p>
+                    <h1 className="text-xl font-bold text-white">{isRaceMode ? "Race Mode" : "Chart View"}</h1>
+                    <p className="text-xs text-gray-400">
+                      {isRaceMode ? "Live momentum race" : "Momentum visualization"}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
+                {/* Time Frame Selector */}
+                <TimeFrameSelector timeFrame={timeFrame} onTimeFrameChange={setTimeFrame} />
+
                 {/* Live Momentum Toggle */}
                 <button
                   onClick={() => setLiveMomentumMode(!liveMomentumMode)}
@@ -660,14 +944,15 @@ export default function MomentumTracker() {
                   Live Momentum
                 </button>
 
-                <button
-                  onClick={markStartTime}
-                  disabled={watchlistData.coins.length === 0}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  <Target className="h-4 w-4" />
-                  Mark Start Time
-                </button>
+                {/* Race Controls */}
+                <RaceControls
+                  isRaceMode={isRaceMode}
+                  onStartRace={startRace}
+                  onStopRace={stopRace}
+                  isTracking={isTracking}
+                  coinCount={watchlistData.coins.length}
+                />
+
                 <button
                   onClick={() => setIsResetModalOpen(true)}
                   disabled={!isTracking}
@@ -697,7 +982,9 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-gray-400 mb-1">Tracking Since</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">
+                    {isRaceMode ? "Race Started" : "Tracking Since"}
+                  </p>
                   <p className="text-lg font-bold text-white">
                     {watchlistData.startTime ? new Date(watchlistData.startTime).toLocaleTimeString() : "Not Started"}
                   </p>
@@ -709,13 +996,21 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-gray-400 mb-1">Best Performer</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">
+                    {isRaceMode ? "Race Leader" : "Best Performer"}
+                  </p>
                   <p className="text-lg font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
                   {bestPerformer && (
-                    <p className="text-sm text-green-400">{formatPercentage(bestPerformer.changesSinceStart)}</p>
+                    <p className="text-sm text-green-400">
+                      {formatPercentage(isRaceMode ? bestPerformer.normalizedPrice : bestPerformer.changesSinceStart)}
+                    </p>
                   )}
                 </div>
-                <TrendingUp className="h-8 w-8 text-purple-400" />
+                {isRaceMode ? (
+                  <Trophy className="h-8 w-8 text-purple-400" />
+                ) : (
+                  <TrendingUp className="h-8 w-8 text-purple-400" />
+                )}
               </div>
             </div>
 
@@ -733,108 +1028,130 @@ export default function MomentumTracker() {
 
         {/* Main Chart Layout */}
         <div className="flex-1 flex px-6 pb-6 gap-4">
-          {/* Left Sidebar - Condensed Watchlist */}
-          <div className="w-80 bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 flex flex-col">
-            <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
-              <h3 className="font-bold text-white text-sm">Watchlist</h3>
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="p-1 rounded bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
-              >
-                <Plus className="h-4 w-4 text-purple-400" />
-              </button>
-            </div>
+          {/* Left Sidebar - Race Leaderboard or Condensed Watchlist */}
+          <div className="w-80 space-y-4">
+            {isRaceMode && <RaceLeaderboard coins={sortedCoins} isRaceMode={isRaceMode} />}
 
-            <div className="flex-1 overflow-y-auto">
-              {sortedCoins.length > 0 ? (
-                <div className="space-y-2 p-2">
-                  {sortedCoins.map((coin) => (
-                    <div
-                      key={coin.id}
-                      onClick={() => setSelectedCoin(coin)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all ${
-                        selectedCoin?.id === coin.id
-                          ? "bg-purple-500/20 border border-purple-500/30"
-                          : "hover:bg-gray-800/30"
-                      } ${
-                        shouldPulse(coin)
-                          ? "animate-pulse border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/20"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold">
-                            {coin.symbol.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white text-sm truncate">{coin.symbol}</div>
-                            <div className="text-xs text-gray-400 truncate">{coin.name}</div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeCoin(coin.id)
-                          }}
-                          className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
+            <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 flex flex-col">
+              <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
+                <h3 className="font-bold text-white text-sm">Watchlist</h3>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="p-1 rounded bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
+                >
+                  <Plus className="h-4 w-4 text-purple-400" />
+                </button>
+              </div>
 
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400 font-bold">Price</span>
-                          <span className="text-white font-mono text-right">${formatPrice(coin.currentPrice)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400 font-bold">Since Start</span>
-                          <span
-                            className={`font-semibold text-right ${
-                              coin.changesSinceStart > 0
-                                ? "text-green-400"
-                                : coin.changesSinceStart < 0
-                                  ? "text-red-400"
-                                  : "text-gray-400"
-                            }`}
+              <div className="flex-1 overflow-y-auto max-h-96">
+                {sortedCoins.length > 0 ? (
+                  <div className="space-y-2 p-2">
+                    {sortedCoins.map((coin, index) => (
+                      <div
+                        key={coin.id}
+                        onClick={() => setSelectedCoin(coin)}
+                        className={`p-3 rounded-lg cursor-pointer transition-all ${
+                          selectedCoin?.id === coin.id
+                            ? "bg-purple-500/20 border border-purple-500/30"
+                            : "hover:bg-gray-800/30"
+                        } ${
+                          shouldPulse(coin)
+                            ? "animate-pulse border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/20"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                              style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
+                            >
+                              {coin.symbol.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-white text-sm truncate">{coin.symbol}</div>
+                              <div className="text-xs text-gray-400 truncate">{coin.name}</div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeCoin(coin.id)
+                            }}
+                            className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                           >
-                            {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
-                          </span>
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400 font-bold">Rate</span>
-                          <span
-                            className={`text-xs text-right ${
-                              Math.abs(coin.rateOfChange) > 0.5
-                                ? coin.rateOfChange > 0
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400 font-bold">Price</span>
+                            <span className="text-white font-mono text-right">${formatPrice(coin.currentPrice)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400 font-bold">{isRaceMode ? "Race %" : "Since Start"}</span>
+                            <span
+                              className={`font-semibold text-right ${
+                                (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
                                   ? "text-green-400"
-                                  : "text-red-400"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {coin.rateOfChange.toFixed(2)}%/min
-                          </span>
+                                  : (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
+                                    ? "text-red-400"
+                                    : "text-gray-400"
+                              }`}
+                            >
+                              {watchlistData.startTime
+                                ? formatPercentage(isRaceMode ? coin.normalizedPrice : coin.changesSinceStart)
+                                : "—"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400 font-bold">Rate</span>
+                            <span
+                              className={`text-xs text-right ${
+                                Math.abs(coin.rateOfChange) > 0.5
+                                  ? coin.rateOfChange > 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {coin.rateOfChange.toFixed(2)}%/min
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-6">
-                  <div className="text-center">
-                    <Plus className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                    <p className="text-gray-400 text-sm">Add coins to watchlist</p>
+                    ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="text-center">
+                      <Plus className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">Add coins to watchlist</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Main Chart Area */}
           <div className="flex-1 bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50">
             <div className="h-full p-6">
-              {selectedCoin && watchlistData.startTime ? (
+              {isRaceMode ? (
+                <div className="h-full flex flex-col">
+                  <div className="mb-4">
+                    <h2 className="text-2xl font-bold text-white mb-1">🏁 Momentum Race</h2>
+                    <div className="flex items-center gap-4">
+                      <span className="text-lg text-white">Normalized Performance Since Start</span>
+                      <span className="text-sm text-gray-400">Timeframe: {timeFrame}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
+                  </div>
+                </div>
+              ) : selectedCoin && watchlistData.startTime ? (
                 <div className="h-full flex flex-col">
                   <div className="mb-4">
                     <h2 className="text-2xl font-bold text-white mb-1">{selectedCoin.symbol}/USD</h2>
@@ -854,24 +1171,24 @@ export default function MomentumTracker() {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <MomentumChart coin={selectedCoin} startTime={watchlistData.startTime} />
+                    <RaceChart coins={[selectedCoin]} startTime={watchlistData.startTime} timeFrame={timeFrame} />
                   </div>
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-400">
                   <div className="text-center">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="mb-2 text-sm">
                       {!watchlistData.startTime
-                        ? "Mark a start time to begin tracking"
-                        : "Select a coin from the watchlist to view its momentum chart"}
+                        ? "Start a race to begin tracking momentum"
+                        : "Select a coin from the watchlist to view its chart"}
                     </p>
                     {!watchlistData.startTime && watchlistData.coins.length > 0 && (
                       <button
-                        onClick={markStartTime}
+                        onClick={startRace}
                         className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all text-sm font-medium"
                       >
-                        Mark Start Time
+                        Start Race
                       </button>
                     )}
                   </div>
@@ -918,7 +1235,7 @@ export default function MomentumTracker() {
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isTracking ? "bg-green-400" : "bg-gray-500"}`} />
                 <span className="text-sm text-gray-400 font-bold">
-                  {isTracking ? "Tracking Active" : "Ready to Track"}
+                  {isRaceMode ? "Race Active" : isTracking ? "Tracking Active" : "Ready to Track"}
                 </span>
               </div>
 
@@ -946,6 +1263,9 @@ export default function MomentumTracker() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Time Frame Selector */}
+              <TimeFrameSelector timeFrame={timeFrame} onTimeFrameChange={setTimeFrame} />
+
               {/* Live Momentum Toggle */}
               <button
                 onClick={() => setLiveMomentumMode(!liveMomentumMode)}
@@ -959,15 +1279,14 @@ export default function MomentumTracker() {
                 Live Momentum
               </button>
 
-              {/* Control Buttons */}
-              <button
-                onClick={markStartTime}
-                disabled={watchlistData.coins.length === 0}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
-              >
-                <Target className="h-4 w-4" />
-                Mark Start Time
-              </button>
+              {/* Race Controls */}
+              <RaceControls
+                isRaceMode={isRaceMode}
+                onStartRace={startRace}
+                onStopRace={stopRace}
+                isTracking={isTracking}
+                coinCount={watchlistData.coins.length}
+              />
 
               <button
                 onClick={() => setIsResetModalOpen(true)}
@@ -1007,7 +1326,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">Tracking Since</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">{isRaceMode ? "Race Started" : "Tracking Since"}</p>
                 <p className="text-lg font-bold text-white">
                   {watchlistData.startTime ? new Date(watchlistData.startTime).toLocaleTimeString() : "Not Started"}
                 </p>
@@ -1019,13 +1338,19 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">Best Performer</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">{isRaceMode ? "Race Leader" : "Best Performer"}</p>
                 <p className="text-lg font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
                 {bestPerformer && (
-                  <p className="text-sm text-green-400">{formatPercentage(bestPerformer.changesSinceStart)}</p>
+                  <p className="text-sm text-green-400">
+                    {formatPercentage(isRaceMode ? bestPerformer.normalizedPrice : bestPerformer.changesSinceStart)}
+                  </p>
                 )}
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-400" />
+              {isRaceMode ? (
+                <Trophy className="h-8 w-8 text-purple-400" />
+              ) : (
+                <TrendingUp className="h-8 w-8 text-purple-400" />
+              )}
             </div>
           </div>
 
@@ -1039,6 +1364,27 @@ export default function MomentumTracker() {
             </div>
           </div>
         </div>
+
+        {/* Race Mode Banner */}
+        {isRaceMode && (
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Flag className="h-6 w-6 text-green-400" />
+                <div>
+                  <h3 className="text-lg font-bold text-white">🏁 Race Mode Active</h3>
+                  <p className="text-sm text-gray-400">All coins normalized to 0% at race start</p>
+                </div>
+              </div>
+              <button
+                onClick={stopRace}
+                className="px-4 py-2 bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 hover:text-white rounded-lg transition-all text-sm font-medium"
+              >
+                Stop Race
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Watchlist Table */}
         {watchlistData.coins.length > 0 ? (
@@ -1060,7 +1406,7 @@ export default function MomentumTracker() {
                       <SortButton field="currentPrice">Current Price</SortButton>
                     </th>
                     <th className="text-center p-4 text-sm font-bold">
-                      <SortButton field="changesSinceStart">% Since Start</SortButton>
+                      <SortButton field="changesSinceStart">{isRaceMode ? "Race %" : "% Since Start"}</SortButton>
                     </th>
                     <th className="text-center p-4 text-sm font-bold">
                       <SortButton field="rateOfChange">Rate of Change</SortButton>
@@ -1073,17 +1419,29 @@ export default function MomentumTracker() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedCoins.map((coin) => (
+                  {sortedCoins.map((coin, index) => (
                     <tr
                       key={coin.id}
                       className={`border-b border-gray-700/30 hover:bg-gray-800/20 transition-all ${
                         shouldPulse(coin) ? "animate-pulse bg-yellow-500/5 border-l-4 border-l-yellow-500/50" : ""
+                      } ${
+                        isRaceMode && coin.racePosition === 1 ? "bg-yellow-500/10 border-l-4 border-l-yellow-500" : ""
                       }`}
                     >
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold">
-                            {coin.symbol.charAt(0)}
+                          <div className="relative">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                              style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
+                            >
+                              {coin.symbol.charAt(0)}
+                            </div>
+                            {isRaceMode && coin.racePosition <= 3 && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black">
+                                {coin.racePosition}
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-white text-sm truncate">{coin.symbol}</div>
@@ -1097,14 +1455,16 @@ export default function MomentumTracker() {
                       <td className="p-4 text-center">
                         <div
                           className={`font-bold text-lg ${
-                            coin.changesSinceStart > 0
+                            (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
                               ? "text-green-400"
-                              : coin.changesSinceStart < 0
+                              : (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
                                 ? "text-red-400"
                                 : "text-gray-400"
                           }`}
                         >
-                          {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
+                          {watchlistData.startTime
+                            ? formatPercentage(isRaceMode ? coin.normalizedPrice : coin.changesSinceStart)
+                            : "—"}
                         </div>
                       </td>
                       <td className="p-4 text-center">
