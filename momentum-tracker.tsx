@@ -22,6 +22,7 @@ import {
   Trophy,
   Flag,
   Pause,
+  Grid3X3,
 } from "lucide-react"
 
 // Types
@@ -737,6 +738,8 @@ export default function MomentumTracker() {
   const [liveMomentumMode, setLiveMomentumMode] = useState(false)
   const [isRaceMode, setIsRaceMode] = useState(false)
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("1min")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [watchlistViewMode, setWatchlistViewMode] = useState<"table" | "cards">("table")
 
   // Get symbols for WebSocket subscription
   const symbols = watchlistData.coins.map((coin) => coin.symbol)
@@ -951,6 +954,87 @@ export default function MomentumTracker() {
       {sortBy === field &&
         (sortDirection === "desc" ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />)}
     </button>
+  )
+
+  // Filter coins based on search term
+  const filteredCoins = useMemo(() => {
+    if (!searchTerm) return sortedCoins
+    return sortedCoins.filter(
+      (coin) =>
+        coin.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        coin.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [sortedCoins, searchTerm])
+
+  const renderCardView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {filteredCoins.map((coin, index) => (
+        <div
+          key={coin.id}
+          className={`bg-gradient-to-br from-[#2a2d3a] to-[#252631] rounded-xl p-4 border border-gray-700/50 transition-all duration-300 ease-out hover:bg-gray-800/30 ${
+            shouldPulse(coin) ? "animate-pulse border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/20" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
+              >
+                {coin.symbol.charAt(0)}
+              </div>
+              <div>
+                <div className="font-bold text-white text-sm">{coin.symbol}</div>
+                <div className="text-xs text-gray-400">{coin.name}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => removeCoin(coin.id)}
+              className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">Price</span>
+              <span className="text-white font-mono">${formatPrice(coin.currentPrice)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">{isRaceMode ? "Race %" : "Since Start"}</span>
+              <span
+                className={`font-semibold ${
+                  (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
+                    ? "text-green-400"
+                    : (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
+                      ? "text-red-400"
+                      : "text-gray-400"
+                }`}
+              >
+                {watchlistData.startTime
+                  ? formatPercentage(isRaceMode ? coin.normalizedPrice : coin.changesSinceStart)
+                  : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">Rate</span>
+              <span
+                className={`text-sm ${
+                  Math.abs(coin.rateOfChange) > 0.5
+                    ? coin.rateOfChange > 0
+                      ? "text-green-400"
+                      : "text-red-400"
+                    : "text-gray-400"
+                }`}
+              >
+                {coin.rateOfChange.toFixed(2)}%/min
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 
   if (viewMode === "chart") {
@@ -1182,20 +1266,59 @@ export default function MomentumTracker() {
             className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 flex flex-col"
             style={{ minHeight: 0 }}
           >
-            <div className="p-4 border-b border-gray-700/50 flex items-center justify-between flex-shrink-0">
-              <h3 className="font-bold text-white text-sm">Watchlist</h3>
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="p-1 rounded bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
-              >
-                <Plus className="h-4 w-4 text-purple-400" />
-              </button>
+            {/* Table Controls */}
+            <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Momentum Watchlist</h2>
+              <div className="flex items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search coins..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-48 pl-10 pr-4 py-2 bg-[#2a2d3a] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  />
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 bg-[#2a2d3a] rounded-lg p-1">
+                  <button
+                    onClick={() => setWatchlistViewMode("table")}
+                    className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md text-xs transition-all font-medium ${
+                      watchlistViewMode === "table" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <List className="h-3 w-3" />
+                    Table
+                  </button>
+                  <button
+                    onClick={() => setWatchlistViewMode("cards")}
+                    className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md text-xs transition-all font-medium ${
+                      watchlistViewMode === "cards" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <Grid3X3 className="h-3 w-3" />
+                    Cards
+                  </button>
+                </div>
+
+                {/* Add Coin Button */}
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Coin
+                </button>
+              </div>
             </div>
 
             <div className="flex-1" style={{ minHeight: 0, overflow: "auto" }}>
-              {sortedCoins.length > 0 ? (
+              {filteredCoins.length > 0 ? (
                 <div className="space-y-2 p-2">
-                  {sortedCoins.map((coin, index) => (
+                  {filteredCoins.map((coin, index) => (
                     <div
                       key={coin.id}
                       onClick={() => setSelectedCoin(coin)}
@@ -1392,14 +1515,6 @@ export default function MomentumTracker() {
                 <RotateCcw className="h-4 w-4" />
                 Reset
               </button>
-
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
-              >
-                <Plus className="h-4 w-4" />
-                Add Coin
-              </button>
             </div>
           </div>
         </div>
@@ -1417,55 +1532,60 @@ export default function MomentumTracker() {
         }}
       >
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">Watchlist Size</p>
-                <p className="text-2xl font-bold text-white">{watchlistData.coins.length}</p>
+                <p className="text-xs font-bold text-gray-400 mb-1">Watchlist Size</p>
+                <p className="text-xl font-bold text-white">{watchlistData.coins.length}</p>
               </div>
-              <Activity className="h-8 w-8 text-blue-400" />
+              <Activity className="h-6 w-6 text-blue-400" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-3 border border-green-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">{isRaceMode ? "Race Started" : "Tracking Since"}</p>
-                <p className="text-lg font-bold text-white">
+                <p className="text-xs font-bold text-gray-400 mb-1">{isRaceMode ? "Race Started" : "Tracking Since"}</p>
+                <p className="text-sm font-bold text-white">
                   {watchlistData.startTime ? new Date(watchlistData.startTime).toLocaleTimeString() : "Not Started"}
                 </p>
+                {watchlistData.startTime && (
+                  <p className="text-xs text-gray-400">
+                    {Math.floor((Date.now() - watchlistData.startTime) / 60000)}m elapsed
+                  </p>
+                )}
               </div>
-              <Clock className="h-8 w-8 text-green-400" />
+              <Clock className="h-6 w-6 text-green-400" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-3 border border-purple-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">{isRaceMode ? "Race Leader" : "Best Performer"}</p>
-                <p className="text-lg font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
+                <p className="text-xs font-bold text-gray-400 mb-1">{isRaceMode ? "Race Leader" : "Best Performer"}</p>
+                <p className="text-sm font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
                 {bestPerformer && (
-                  <p className="text-sm text-green-400">
+                  <p className="text-xs text-green-400">
                     {formatPercentage(isRaceMode ? bestPerformer.normalizedPrice : bestPerformer.changesSinceStart)}
                   </p>
                 )}
               </div>
               {isRaceMode ? (
-                <Trophy className="h-8 w-8 text-purple-400" />
+                <Trophy className="h-6 w-6 text-purple-400" />
               ) : (
-                <TrendingUp className="h-8 w-8 text-purple-400" />
+                <TrendingUp className="h-6 w-6 text-purple-400" />
               )}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30">
+          <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-3 border border-orange-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-400 mb-1">Fastest Mover</p>
-                <p className="text-lg font-bold text-white">{fastestMover?.symbol || "N/A"}</p>
+                <p className="text-xs font-bold text-gray-400 mb-1">Fastest Mover</p>
+                <p className="text-sm font-bold text-white">{fastestMover?.symbol || "N/A"}</p>
               </div>
-              <Zap className="h-8 w-8 text-orange-400" />
+              <Zap className="h-6 w-6 text-orange-400" />
             </div>
           </div>
         </div>
@@ -1500,139 +1620,187 @@ export default function MomentumTracker() {
             {/* Table Controls */}
             <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">Momentum Watchlist</h2>
+              <div className="flex items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search coins..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-48 pl-10 pr-4 py-2 bg-[#2a2d3a] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  />
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 bg-[#2a2d3a] rounded-lg p-1">
+                  <button
+                    onClick={() => setWatchlistViewMode("table")}
+                    className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md text-xs transition-all font-medium ${
+                      watchlistViewMode === "table" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <List className="h-3 w-3" />
+                    Table
+                  </button>
+                  <button
+                    onClick={() => setWatchlistViewMode("cards")}
+                    className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md text-xs transition-all font-medium ${
+                      watchlistViewMode === "cards" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <Grid3X3 className="h-3 w-3" />
+                    Cards
+                  </button>
+                </div>
+
+                {/* Add Coin Button */}
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Coin
+                </button>
+              </div>
             </div>
 
             {/* Table */}
             <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 400px)" }}>
-              <table className="w-full">
-                <thead className="sticky top-0 bg-[#1e1f2a]">
-                  <tr className="border-b border-gray-700/50">
-                    <th className="text-left p-4 text-sm font-bold">
-                      <span className="text-gray-400">Asset</span>
-                    </th>
-                    <th className="text-center p-4 text-sm font-bold">
-                      <SortButton field="currentPrice">Current Price</SortButton>
-                    </th>
-                    <th className="text-center p-4 text-sm font-bold">
-                      <SortButton field="changesSinceStart">{isRaceMode ? "Race %" : "% Since Start"}</SortButton>
-                    </th>
-                    <th className="text-center p-4 text-sm font-bold">
-                      <SortButton field="rateOfChange">Rate of Change</SortButton>
-                    </th>
-                    <th className="text-center p-4 text-sm font-bold">
-                      <SortButton field="dailyChange">Daily %</SortButton>
-                    </th>
-                    <th className="text-center p-4 text-sm font-bold text-gray-400">Momentum</th>
-                    <th className="text-center p-4 text-sm font-bold text-gray-400">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedCoins.map((coin, index) => (
-                    <tr
-                      key={coin.id}
-                      className={`border-b border-gray-700/30 hover:bg-gray-800/20 transition-all duration-300 ease-out ${
-                        shouldPulse(coin) ? "animate-pulse bg-yellow-500/5 border-l-4 border-l-yellow-500/50" : ""
-                      } ${
-                        isRaceMode && coin.racePosition === 1 ? "bg-yellow-500/10 border-l-4 border-l-yellow-500" : ""
-                      }`}
-                      style={{
-                        transform:
-                          coin.previousPosition && coin.previousPosition !== coin.racePosition
-                            ? `translateY(${(coin.previousPosition - coin.racePosition) * 5}px)`
-                            : "translateY(0)",
-                        transition: "transform 0.5s ease-out, background-color 0.3s ease-out",
-                      }}
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-300"
-                              style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
-                            >
-                              {coin.symbol.charAt(0)}
-                            </div>
-                            {isRaceMode && coin.racePosition <= 3 && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black transition-all duration-300">
-                                {coin.racePosition}
+              {watchlistViewMode === "cards" ? (
+                renderCardView()
+              ) : (
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-[#1e1f2a]">
+                    <tr className="border-b border-gray-700/50">
+                      <th className="text-left p-4 text-sm font-bold">
+                        <span className="text-gray-400">Asset</span>
+                      </th>
+                      <th className="text-center p-4 text-sm font-bold">
+                        <SortButton field="currentPrice">Current Price</SortButton>
+                      </th>
+                      <th className="text-center p-4 text-sm font-bold">
+                        <SortButton field="changesSinceStart">{isRaceMode ? "Race %" : "% Since Start"}</SortButton>
+                      </th>
+                      <th className="text-center p-4 text-sm font-bold">
+                        <SortButton field="rateOfChange">Rate of Change</SortButton>
+                      </th>
+                      <th className="text-center p-4 text-sm font-bold">
+                        <SortButton field="dailyChange">Daily %</SortButton>
+                      </th>
+                      <th className="text-center p-4 text-sm font-bold text-gray-400">Momentum</th>
+                      <th className="text-center p-4 text-sm font-bold text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCoins.map((coin, index) => (
+                      <tr
+                        key={coin.id}
+                        className={`border-b border-gray-700/30 hover:bg-gray-800/20 transition-all duration-300 ease-out ${
+                          shouldPulse(coin) ? "animate-pulse bg-yellow-500/5 border-l-4 border-l-yellow-500/50" : ""
+                        } ${
+                          isRaceMode && coin.racePosition === 1 ? "bg-yellow-500/10 border-l-4 border-l-yellow-500" : ""
+                        }`}
+                        style={{
+                          transform:
+                            coin.previousPosition && coin.previousPosition !== coin.racePosition
+                              ? `translateY(${(coin.previousPosition - coin.racePosition) * 5}px)`
+                              : "translateY(0)",
+                          transition: "transform 0.5s ease-out, background-color 0.3s ease-out",
+                        }}
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold transition-all duration-300"
+                                style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
+                              >
+                                {coin.symbol.charAt(0)}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-white text-sm truncate">{coin.symbol}</div>
-                            <div className="text-xs text-gray-400 truncate">{coin.name}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="text-white font-mono text-lg">${formatPrice(coin.currentPrice)}</div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div
-                          className={`font-bold text-lg transition-colors duration-300 ${
-                            (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
-                              ? "text-green-400"
-                              : (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
-                                ? "text-red-400"
-                                : "text-gray-400"
-                          }`}
-                        >
-                          {watchlistData.startTime
-                            ? formatPercentage(isRaceMode ? coin.normalizedPrice : coin.changesSinceStart)
-                            : "—"}
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {Math.abs(coin.rateOfChange) > 0.1 && (
-                            <>
-                              {coin.rateOfChange > 0 ? (
-                                <TrendingUp className="h-3 w-3 text-green-400" />
-                              ) : (
-                                <TrendingDown className="h-3 w-3 text-red-400" />
+                              {isRaceMode && coin.racePosition <= 3 && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black transition-all duration-300">
+                                  {coin.racePosition}
+                                </div>
                               )}
-                            </>
-                          )}
-                          <span
-                            className={`text-sm font-semibold transition-colors duration-300 ${
-                              Math.abs(coin.rateOfChange) > 0.5
-                                ? coin.rateOfChange > 0
-                                  ? "text-green-400"
-                                  : "text-red-400"
-                                : "text-gray-400"
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-white text-sm truncate">{coin.symbol}</div>
+                              <div className="text-xs text-gray-400 truncate">{coin.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="text-white font-mono text-lg">${formatPrice(coin.currentPrice)}</div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div
+                            className={`font-bold text-lg transition-colors duration-300 ${
+                              (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
+                                ? "text-green-400"
+                                : (isRaceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
+                                  ? "text-red-400"
+                                  : "text-gray-400"
                             }`}
                           >
-                            {coin.rateOfChange.toFixed(2)}%/min
+                            {watchlistData.startTime
+                              ? formatPercentage(isRaceMode ? coin.normalizedPrice : coin.changesSinceStart)
+                              : "—"}
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {Math.abs(coin.rateOfChange) > 0.1 && (
+                              <>
+                                {coin.rateOfChange > 0 ? (
+                                  <TrendingUp className="h-3 w-3 text-green-400" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3 text-red-400" />
+                                )}
+                              </>
+                            )}
+                            <span
+                              className={`text-sm font-semibold transition-colors duration-300 ${
+                                Math.abs(coin.rateOfChange) > 0.5
+                                  ? coin.rateOfChange > 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {coin.rateOfChange.toFixed(2)}%/min
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`text-sm font-semibold transition-colors duration-300 ${
+                              coin.dailyChange > 0 ? "text-green-400" : "text-red-400"
+                            }`}
+                          >
+                            {formatPercentage(coin.dailyChange)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span
-                          className={`text-sm font-semibold transition-colors duration-300 ${
-                            coin.dailyChange > 0 ? "text-green-400" : "text-red-400"
-                          }`}
-                        >
-                          {formatPercentage(coin.dailyChange)}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        <MiniSparkline
-                          data={coin.priceHistory.slice(-20).map((p) => p.price)}
-                          isPositive={coin.changesSinceStart > 0}
-                        />
-                      </td>
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => removeCoin(coin.id)}
-                          className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td className="p-4 text-center">
+                          <MiniSparkline
+                            data={coin.priceHistory.slice(-20).map((p) => p.price)}
+                            isPositive={coin.changesSinceStart > 0}
+                          />
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => removeCoin(coin.id)}
+                            className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         ) : (
