@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   ChevronUp,
   ChevronDown,
+  Star,
 } from "lucide-react"
 
 // Types
@@ -282,7 +283,7 @@ function MomentumChart({ coin, startTime }: { coin: CoinData; startTime: number 
       <div className="h-full flex items-center justify-center text-gray-400">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Select a coin to view momentum chart</p>
+          <p className="text-sm">Select a coin to view momentum chart</p>
         </div>
       </div>
     )
@@ -348,11 +349,11 @@ function AddCoinModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 p-6 w-96 max-h-96">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 p-6 w-full max-w-md max-h-96">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Add Coin to Watchlist</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <h3 className="text-lg font-bold text-white">Add Coin to Watchlist</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -364,7 +365,7 @@ function AddCoinModal({
             placeholder="Search coins..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#2a2d3a] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-10 pr-4 py-2 bg-[#2a2d3a] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
           />
         </div>
 
@@ -382,14 +383,14 @@ function AddCoinModal({
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold">
                 {coin.symbol.charAt(0)}
               </div>
-              <div>
-                <div className="font-medium text-white">{coin.symbol}</div>
-                <div className="text-sm text-gray-400">{coin.name}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-white text-sm truncate">{coin.symbol}</div>
+                <div className="text-xs text-gray-400 truncate">{coin.name}</div>
               </div>
             </button>
           ))}
           {filteredCoins.length === 0 && (
-            <div className="text-center py-4 text-gray-400">
+            <div className="text-center py-4 text-gray-400 text-sm">
               {existingSymbols.length === MOCK_COINS.length ? "All coins already added" : "No coins found"}
             </div>
           )}
@@ -408,21 +409,21 @@ function ResetConfirmModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 p-6 w-96">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 p-6 w-full max-w-md">
         <div className="text-center">
           <div className="w-12 h-12 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center mx-auto mb-4">
             <RotateCcw className="h-6 w-6 text-orange-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Reset Momentum Tracking?</h3>
-          <p className="text-gray-400 mb-6">
+          <h3 className="text-lg font-bold text-white mb-2">Reset Momentum Tracking?</h3>
+          <p className="text-gray-400 mb-6 text-sm">
             This will reset all "% Since Start" calculations to 0% and clear the marked start time. Your watchlist will
             remain intact.
           </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-white rounded-lg transition-colors"
+              className="flex-1 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-white rounded-lg transition-colors text-center text-sm font-medium"
             >
               Cancel
             </button>
@@ -431,7 +432,7 @@ function ResetConfirmModal({
                 onConfirm()
                 onClose()
               }}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-all"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-all text-center text-sm font-medium"
             >
               Reset
             </button>
@@ -454,6 +455,7 @@ export default function MomentumTracker() {
   const [isTracking, setIsTracking] = useState(false)
   const [viewMode, setViewMode] = useState<"table" | "chart">("table")
   const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null)
+  const [liveMomentumMode, setLiveMomentumMode] = useState(false)
 
   // Get symbols for WebSocket subscription
   const symbols = watchlistData.coins.map((coin) => coin.symbol)
@@ -599,10 +601,18 @@ export default function MomentumTracker() {
   const bestPerformer = sortedCoins.find((coin) => coin.changesSinceStart > 0) || sortedCoins[0]
   const fastestMover = [...sortedCoins].sort((a, b) => Math.abs(b.rateOfChange) - Math.abs(a.rateOfChange))[0]
 
+  // Check if coin should pulse (gaining >0.5%/minute)
+  const shouldPulse = useCallback(
+    (coin: CoinData) => {
+      return liveMomentumMode && coin.rateOfChange > 0.5
+    },
+    [liveMomentumMode],
+  )
+
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+      className="flex items-center justify-center gap-1 text-gray-400 hover:text-white transition-colors text-sm font-bold"
     >
       {children}
       {sortBy === field &&
@@ -617,10 +627,10 @@ export default function MomentumTracker() {
         <div className="bg-[#21222d]/80 backdrop-blur-xl border-b border-gray-800/50">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => setViewMode("table")}
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                  className="flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Table
@@ -637,10 +647,23 @@ export default function MomentumTracker() {
               </div>
 
               <div className="flex items-center gap-3">
+                {/* Live Momentum Toggle */}
+                <button
+                  onClick={() => setLiveMomentumMode(!liveMomentumMode)}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                    liveMomentumMode
+                      ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                      : "bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <Star className="h-4 w-4" />
+                  Live Momentum
+                </button>
+
                 <button
                   onClick={markStartTime}
                   disabled={watchlistData.coins.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
                 >
                   <Target className="h-4 w-4" />
                   Mark Start Time
@@ -648,7 +671,7 @@ export default function MomentumTracker() {
                 <button
                   onClick={() => setIsResetModalOpen(true)}
                   disabled={!isTracking}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Reset
@@ -664,7 +687,7 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Watchlist Size</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">Watchlist Size</p>
                   <p className="text-2xl font-bold text-white">{watchlistData.coins.length}</p>
                 </div>
                 <Activity className="h-8 w-8 text-blue-400" />
@@ -674,7 +697,7 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Tracking Since</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">Tracking Since</p>
                   <p className="text-lg font-bold text-white">
                     {watchlistData.startTime ? new Date(watchlistData.startTime).toLocaleTimeString() : "Not Started"}
                   </p>
@@ -686,7 +709,7 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Best Performer</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">Best Performer</p>
                   <p className="text-lg font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
                   {bestPerformer && (
                     <p className="text-sm text-green-400">{formatPercentage(bestPerformer.changesSinceStart)}</p>
@@ -699,7 +722,7 @@ export default function MomentumTracker() {
             <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Fastest Mover</p>
+                  <p className="text-sm font-bold text-gray-400 mb-1">Fastest Mover</p>
                   <p className="text-lg font-bold text-white">{fastestMover?.symbol || "N/A"}</p>
                 </div>
                 <Zap className="h-8 w-8 text-orange-400" />
@@ -709,11 +732,11 @@ export default function MomentumTracker() {
         </div>
 
         {/* Main Chart Layout */}
-        <div className="flex-1 flex px-6 pb-6 gap-6">
+        <div className="flex-1 flex px-6 pb-6 gap-4">
           {/* Left Sidebar - Condensed Watchlist */}
           <div className="w-80 bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 flex flex-col">
             <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
-              <h3 className="font-semibold text-white">Watchlist</h3>
+              <h3 className="font-bold text-white text-sm">Watchlist</h3>
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="p-1 rounded bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
@@ -724,7 +747,7 @@ export default function MomentumTracker() {
 
             <div className="flex-1 overflow-y-auto">
               {sortedCoins.length > 0 ? (
-                <div className="space-y-1 p-2">
+                <div className="space-y-2 p-2">
                   {sortedCoins.map((coin) => (
                     <div
                       key={coin.id}
@@ -733,16 +756,20 @@ export default function MomentumTracker() {
                         selectedCoin?.id === coin.id
                           ? "bg-purple-500/20 border border-purple-500/30"
                           : "hover:bg-gray-800/30"
+                      } ${
+                        shouldPulse(coin)
+                          ? "animate-pulse border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/20"
+                          : ""
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold">
                             {coin.symbol.charAt(0)}
                           </div>
-                          <div>
-                            <div className="font-medium text-white text-sm">{coin.symbol}</div>
-                            <div className="text-xs text-gray-400">{coin.name}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white text-sm truncate">{coin.symbol}</div>
+                            <div className="text-xs text-gray-400 truncate">{coin.name}</div>
                           </div>
                         </div>
                         <button
@@ -758,13 +785,13 @@ export default function MomentumTracker() {
 
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Price</span>
-                          <span className="text-white font-mono">${formatPrice(coin.currentPrice)}</span>
+                          <span className="text-gray-400 font-bold">Price</span>
+                          <span className="text-white font-mono text-right">${formatPrice(coin.currentPrice)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Since Start</span>
+                          <span className="text-gray-400 font-bold">Since Start</span>
                           <span
-                            className={`font-medium ${
+                            className={`font-semibold text-right ${
                               coin.changesSinceStart > 0
                                 ? "text-green-400"
                                 : coin.changesSinceStart < 0
@@ -776,9 +803,9 @@ export default function MomentumTracker() {
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Rate</span>
+                          <span className="text-gray-400 font-bold">Rate</span>
                           <span
-                            className={`text-xs ${
+                            className={`text-xs text-right ${
                               Math.abs(coin.rateOfChange) > 0.5
                                 ? coin.rateOfChange > 0
                                   ? "text-green-400"
@@ -814,7 +841,7 @@ export default function MomentumTracker() {
                     <div className="flex items-center gap-4">
                       <span className="text-lg font-mono text-white">${formatPrice(selectedCoin.currentPrice)}</span>
                       <span
-                        className={`font-medium ${
+                        className={`font-semibold ${
                           selectedCoin.changesSinceStart > 0
                             ? "text-green-400"
                             : selectedCoin.changesSinceStart < 0
@@ -834,7 +861,7 @@ export default function MomentumTracker() {
                 <div className="h-full flex items-center justify-center text-gray-400">
                   <div className="text-center">
                     <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="mb-2">
+                    <p className="mb-2 text-sm">
                       {!watchlistData.startTime
                         ? "Mark a start time to begin tracking"
                         : "Select a coin from the watchlist to view its momentum chart"}
@@ -842,7 +869,7 @@ export default function MomentumTracker() {
                     {!watchlistData.startTime && watchlistData.coins.length > 0 && (
                       <button
                         onClick={markStartTime}
-                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all"
+                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all text-sm font-medium"
                       >
                         Mark Start Time
                       </button>
@@ -876,7 +903,7 @@ export default function MomentumTracker() {
       <div className="sticky top-0 z-40 bg-[#21222d]/80 backdrop-blur-xl border-b border-gray-800/50">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-white" />
@@ -890,14 +917,16 @@ export default function MomentumTracker() {
               {/* Status Indicator */}
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isTracking ? "bg-green-400" : "bg-gray-500"}`} />
-                <span className="text-sm text-gray-400">{isTracking ? "Tracking Active" : "Ready to Track"}</span>
+                <span className="text-sm text-gray-400 font-bold">
+                  {isTracking ? "Tracking Active" : "Ready to Track"}
+                </span>
               </div>
 
               {/* View Toggle */}
               <div className="flex items-center gap-1 bg-[#2a2d3a] rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all ${
+                  className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all font-medium ${
                     viewMode === "table" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
                   }`}
                 >
@@ -906,7 +935,7 @@ export default function MomentumTracker() {
                 </button>
                 <button
                   onClick={() => setViewMode("chart")}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all ${
+                  className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all font-medium ${
                     viewMode === "chart" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
                   }`}
                 >
@@ -917,11 +946,24 @@ export default function MomentumTracker() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Live Momentum Toggle */}
+              <button
+                onClick={() => setLiveMomentumMode(!liveMomentumMode)}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                  liveMomentumMode
+                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                    : "bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-gray-400 hover:text-white"
+                }`}
+              >
+                <Star className="h-4 w-4" />
+                Live Momentum
+              </button>
+
               {/* Control Buttons */}
               <button
                 onClick={markStartTime}
                 disabled={watchlistData.coins.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
               >
                 <Target className="h-4 w-4" />
                 Mark Start Time
@@ -930,7 +972,7 @@ export default function MomentumTracker() {
               <button
                 onClick={() => setIsResetModalOpen(true)}
                 disabled={!isTracking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
               >
                 <RotateCcw className="h-4 w-4" />
                 Reset
@@ -938,7 +980,7 @@ export default function MomentumTracker() {
 
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
               >
                 <Plus className="h-4 w-4" />
                 Add Coin
@@ -955,7 +997,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Watchlist Size</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">Watchlist Size</p>
                 <p className="text-2xl font-bold text-white">{watchlistData.coins.length}</p>
               </div>
               <Activity className="h-8 w-8 text-blue-400" />
@@ -965,7 +1007,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Tracking Since</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">Tracking Since</p>
                 <p className="text-lg font-bold text-white">
                   {watchlistData.startTime ? new Date(watchlistData.startTime).toLocaleTimeString() : "Not Started"}
                 </p>
@@ -977,7 +1019,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Best Performer</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">Best Performer</p>
                 <p className="text-lg font-bold text-white">{bestPerformer?.symbol || "N/A"}</p>
                 {bestPerformer && (
                   <p className="text-sm text-green-400">{formatPercentage(bestPerformer.changesSinceStart)}</p>
@@ -990,7 +1032,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Fastest Mover</p>
+                <p className="text-sm font-bold text-gray-400 mb-1">Fastest Mover</p>
                 <p className="text-lg font-bold text-white">{fastestMover?.symbol || "N/A"}</p>
               </div>
               <Zap className="h-8 w-8 text-orange-400" />
@@ -1003,7 +1045,7 @@ export default function MomentumTracker() {
           <div className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 overflow-hidden">
             {/* Table Controls */}
             <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Momentum Watchlist</h2>
+              <h2 className="text-lg font-bold text-white">Momentum Watchlist</h2>
             </div>
 
             {/* Table */}
@@ -1011,45 +1053,50 @@ export default function MomentumTracker() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-700/50">
-                    <th className="text-left p-4 text-sm font-medium">
+                    <th className="text-left p-4 text-sm font-bold">
                       <span className="text-gray-400">Asset</span>
                     </th>
-                    <th className="text-right p-4 text-sm font-medium">
+                    <th className="text-center p-4 text-sm font-bold">
                       <SortButton field="currentPrice">Current Price</SortButton>
                     </th>
-                    <th className="text-right p-4 text-sm font-medium">
+                    <th className="text-center p-4 text-sm font-bold">
                       <SortButton field="changesSinceStart">% Since Start</SortButton>
                     </th>
-                    <th className="text-right p-4 text-sm font-medium">
+                    <th className="text-center p-4 text-sm font-bold">
                       <SortButton field="rateOfChange">Rate of Change</SortButton>
                     </th>
-                    <th className="text-right p-4 text-sm font-medium">
+                    <th className="text-center p-4 text-sm font-bold">
                       <SortButton field="dailyChange">Daily %</SortButton>
                     </th>
-                    <th className="text-center p-4 text-sm font-medium text-gray-400">Momentum</th>
-                    <th className="text-center p-4 text-sm font-medium text-gray-400">Actions</th>
+                    <th className="text-center p-4 text-sm font-bold text-gray-400">Momentum</th>
+                    <th className="text-center p-4 text-sm font-bold text-gray-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedCoins.map((coin) => (
-                    <tr key={coin.id} className="border-b border-gray-700/30 hover:bg-gray-800/20 transition-colors">
+                    <tr
+                      key={coin.id}
+                      className={`border-b border-gray-700/30 hover:bg-gray-800/20 transition-all ${
+                        shouldPulse(coin) ? "animate-pulse bg-yellow-500/5 border-l-4 border-l-yellow-500/50" : ""
+                      }`}
+                    >
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-semibold">
                             {coin.symbol.charAt(0)}
                           </div>
-                          <div>
-                            <div className="font-semibold text-white text-sm">{coin.symbol}</div>
-                            <div className="text-xs text-gray-400">{coin.name}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-white text-sm truncate">{coin.symbol}</div>
+                            <div className="text-xs text-gray-400 truncate">{coin.name}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 text-right">
-                        <div className="text-white font-mono">${formatPrice(coin.currentPrice)}</div>
+                      <td className="p-4 text-center">
+                        <div className="text-white font-mono text-lg">${formatPrice(coin.currentPrice)}</div>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-center">
                         <div
-                          className={`font-bold ${
+                          className={`font-bold text-lg ${
                             coin.changesSinceStart > 0
                               ? "text-green-400"
                               : coin.changesSinceStart < 0
@@ -1060,8 +1107,8 @@ export default function MomentumTracker() {
                           {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
                         </div>
                       </td>
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
                           {Math.abs(coin.rateOfChange) > 0.1 && (
                             <>
                               {coin.rateOfChange > 0 ? (
@@ -1072,7 +1119,7 @@ export default function MomentumTracker() {
                             </>
                           )}
                           <span
-                            className={`text-sm ${
+                            className={`text-sm font-semibold ${
                               Math.abs(coin.rateOfChange) > 0.5
                                 ? coin.rateOfChange > 0
                                   ? "text-green-400"
@@ -1084,8 +1131,12 @@ export default function MomentumTracker() {
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 text-right">
-                        <span className={`text-sm ${coin.dailyChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                      <td className="p-4 text-center">
+                        <span
+                          className={`text-sm font-semibold ${
+                            coin.dailyChange > 0 ? "text-green-400" : "text-red-400"
+                          }`}
+                        >
                           {formatPercentage(coin.dailyChange)}
                         </span>
                       </td>
@@ -1114,11 +1165,11 @@ export default function MomentumTracker() {
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-4">
               <Plus className="h-8 w-8 text-purple-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">Start Building Your Watchlist</h3>
-            <p className="text-gray-400 mb-6">Add coins to track their momentum from a specific start time</p>
+            <h3 className="text-lg font-bold text-white mb-2">Start Building Your Watchlist</h3>
+            <p className="text-gray-400 mb-6 text-sm">Add coins to track their momentum from a specific start time</p>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all"
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
             >
               Add Your First Coin
             </button>
