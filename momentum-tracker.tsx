@@ -219,7 +219,7 @@ const formatPercentage = (pct: number): string => {
 }
 
 // Enhanced Trace Chart Component
-function RaceChart({
+function TraceChart({
   coins,
   startTime,
   timeFrame,
@@ -416,7 +416,7 @@ function RaceChart({
 }
 
 // Animated Live Trace Leaderboard Component
-function RaceLeaderboard({ coins, isTraceMode }: { coins: CoinData[]; isTraceMode: boolean }) {
+function TraceLeaderboard({ coins, isTraceMode }: { coins: CoinData[]; isTraceMode: boolean }) {
   const [sortedCoins, setSortedCoins] = useState<CoinData[]>([])
 
   useEffect(() => {
@@ -527,7 +527,7 @@ function TimeFrameSelector({
         <button
           key={tf}
           onClick={() => onTimeFrameChange(tf)}
-          className={`px-3 py-1.5 rounded-md text-sm transition-all font-medium ${
+          className={`px-3 py-1.5 rounded-md text-xs transition-all font-medium ${
             timeFrame === tf ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
           }`}
         >
@@ -539,7 +539,7 @@ function TimeFrameSelector({
 }
 
 // Trace Controls Component
-function RaceControls({
+function TraceControls({
   isTraceMode,
   onStartTrace,
   onStopTrace,
@@ -553,20 +553,20 @@ function RaceControls({
   coinCount: number
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       {!isTraceMode ? (
         <button
           onClick={onStartTrace}
           disabled={coinCount === 0}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
+          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
         >
           <Flag className="h-4 w-4" />
-          Start Trace (Normalize to 0%)
+          Start Trace
         </button>
       ) : (
         <button
           onClick={onStopTrace}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-lg transition-all text-sm font-medium"
+          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-lg transition-all text-sm font-medium"
         >
           <Pause className="h-4 w-4" />
           Stop Trace
@@ -1052,12 +1052,12 @@ export default function MomentumTracker() {
       >
         {/* Header */}
         <div className="bg-[#21222d]/80 backdrop-blur-xl border-b border-gray-800/50">
-          <div className="px-6 py-4">
+          <div className="px-4 py-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setViewMode("table")}
-                  className="flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
+                  className="flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium px-3 py-1.5 rounded-lg"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Table
@@ -1071,8 +1071,8 @@ export default function MomentumTracker() {
                     )}
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-white">{isTraceMode ? "Trace Mode" : "Chart View"}</h1>
-                    <p className="text-xs text-gray-400">
+                    <h1 className="text-lg font-bold text-white">{isTraceMode ? "Trace Mode" : "Chart View"}</h1>
+                    <p className="text-[10px] text-gray-400">
                       {isTraceMode ? "Live momentum trace" : "Momentum visualization"}
                     </p>
                   </div>
@@ -1086,7 +1086,7 @@ export default function MomentumTracker() {
                 {/* Live Momentum Toggle */}
                 <button
                   onClick={() => setLiveMomentumMode(!liveMomentumMode)}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                  className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm font-medium ${
                     liveMomentumMode
                       ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
                       : "bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-gray-400 hover:text-white"
@@ -1097,7 +1097,7 @@ export default function MomentumTracker() {
                 </button>
 
                 {/* Trace Controls */}
-                <RaceControls
+                <TraceControls
                   isTraceMode={isTraceMode}
                   onStartTrace={startTrace}
                   onStopTrace={stopTrace}
@@ -1108,7 +1108,7 @@ export default function MomentumTracker() {
                 <button
                   onClick={() => setIsResetModalOpen(true)}
                   disabled={!isTracking}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
+                  className="flex items-center justify-center gap-2 px-3 py-1.5 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Reset
@@ -1132,7 +1132,7 @@ export default function MomentumTracker() {
           {/* Left Sidebar - Stats Cards */}
           <div className="space-y-4" style={{ minHeight: 0, overflow: "hidden" }}>
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
+              <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-gray-400 mb-1">Watchlist Size</p>
@@ -1142,7 +1142,7 @@ export default function MomentumTracker() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
+              <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30 min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-gray-400 mb-1">
@@ -1156,7 +1156,7 @@ export default function MomentumTracker() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30">
+              <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/30 min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-gray-400 mb-1">
@@ -1179,7 +1179,7 @@ export default function MomentumTracker() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30">
+              <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-4 border border-orange-500/30 min-h-[100px] flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-gray-400 mb-1">Fastest Mover</p>
@@ -1190,10 +1190,10 @@ export default function MomentumTracker() {
               </div>
             </div>
 
-            {/* Race Leaderboard */}
+            {/* Trace Leaderboard */}
             {isTraceMode && (
               <div style={{ minHeight: 0, overflow: "auto" }}>
-                <RaceLeaderboard coins={sortedCoins} isTraceMode={isTraceMode} />
+                <TraceLeaderboard coins={sortedCoins} isTraceMode={isTraceMode} />
               </div>
             )}
           </div>
@@ -1207,14 +1207,14 @@ export default function MomentumTracker() {
               {isTraceMode ? (
                 <>
                   <div className="mb-4 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-white mb-1">🏁 Momentum Race</h2>
+                    <h2 className="text-2xl font-bold text-white mb-1">🏁 Momentum Trace</h2>
                     <div className="flex items-center gap-4">
                       <span className="text-lg text-white">Normalized Performance Since Start</span>
                       <span className="text-sm text-gray-400">Timeframe: {timeFrame}</span>
                     </div>
                   </div>
                   <div className="flex-1" style={{ minHeight: 0 }}>
-                    <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
+                    <TraceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
                   </div>
                 </>
               ) : selectedCoin && watchlistData.startTime ? (
@@ -1237,7 +1237,7 @@ export default function MomentumTracker() {
                     </div>
                   </div>
                   <div className="flex-1" style={{ minHeight: 0 }}>
-                    <RaceChart coins={[selectedCoin]} startTime={watchlistData.startTime} timeFrame={timeFrame} />
+                    <TraceChart coins={[selectedCoin]} startTime={watchlistData.startTime} timeFrame={timeFrame} />
                   </div>
                 </>
               ) : (
@@ -1246,7 +1246,7 @@ export default function MomentumTracker() {
                     <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="mb-2 text-sm">
                       {!watchlistData.startTime
-                        ? "Start a race to begin tracking momentum"
+                        ? "Start a trace to begin tracking momentum"
                         : "Select a coin from the watchlist to view its chart"}
                     </p>
                     {!watchlistData.startTime && watchlistData.coins.length > 0 && (
@@ -1254,7 +1254,7 @@ export default function MomentumTracker() {
                         onClick={startTrace}
                         className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all text-sm font-medium"
                       >
-                        Start Race
+                        Start Trace
                       </button>
                     )}
                   </div>
@@ -1309,7 +1309,7 @@ export default function MomentumTracker() {
                 {/* Add Coin Button */}
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
+                  className="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
                 >
                   <Plus className="h-4 w-4" />
                   Add Coin
@@ -1443,20 +1443,20 @@ export default function MomentumTracker() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-white">Momentum Tracker</h1>
-                  <p className="text-[10px] text-gray-400">Real-time leverage trading momentum</p>
+                  <h1 className="text-base font-bold text-white">Momentum Tracker</h1>
+                  <p className="text-[9px] text-gray-400">Real-time leverage trading momentum</p>
                 </div>
               </div>
 
               {/* Status Indicator */}
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isTracking ? "bg-green-300" : "bg-gray-500"}`} />
-                <span className="text-sm text-gray-400 font-bold">
-                  {isTraceMode ? "Race Active" : isTracking ? "Tracking Active" : "Ready to Track"}
+                <span className="text-xs text-gray-400 font-bold">
+                  {isTraceMode ? "Trace Active" : isTracking ? "Tracking Active" : "Ready to Track"}
                 </span>
               </div>
 
@@ -1484,13 +1484,10 @@ export default function MomentumTracker() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Time Frame Selector */}
-              <TimeFrameSelector timeFrame={timeFrame} onTimeFrameChange={setTimeFrame} />
-
               {/* Live Momentum Toggle */}
               <button
                 onClick={() => setLiveMomentumMode(!liveMomentumMode)}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm font-medium ${
                   liveMomentumMode
                     ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
                     : "bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] text-gray-400 hover:text-white"
@@ -1500,8 +1497,8 @@ export default function MomentumTracker() {
                 Live Momentum
               </button>
 
-              {/* Race Controls */}
-              <RaceControls
+              {/* Trace Controls */}
+              <TraceControls
                 isTraceMode={isTraceMode}
                 onStartTrace={startTrace}
                 onStopTrace={stopTrace}
@@ -1512,7 +1509,7 @@ export default function MomentumTracker() {
               <button
                 onClick={() => setIsResetModalOpen(true)}
                 disabled={!isTracking}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
+                className="flex items-center justify-center gap-2 px-3 py-1.5 bg-[#2a2d3a] border border-gray-700 hover:bg-[#3a3d4a] disabled:opacity-50 text-white rounded-lg transition-all disabled:cursor-not-allowed text-sm font-medium"
               >
                 <RotateCcw className="h-4 w-4" />
                 Reset
@@ -1535,17 +1532,17 @@ export default function MomentumTracker() {
       >
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-2">
-          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-2 border border-blue-500/30">
+          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30 min-h-[90px] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-gray-400 mb-1">Watchlist Size</p>
-                <p className="text-lg font-bold text-white">{watchlistData.coins.length}</p>
+                <p className="text-xl font-bold text-white">{watchlistData.coins.length}</p>
               </div>
-              <Activity className="h-4 w-4 text-blue-300" />
+              <Activity className="h-5 w-5 text-blue-300" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-2 border border-green-500/30">
+          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-3 border border-green-500/30 min-h-[90px] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-gray-400 mb-1">
@@ -1560,11 +1557,11 @@ export default function MomentumTracker() {
                   </p>
                 )}
               </div>
-              <Clock className="h-4 w-4 text-green-300" />
+              <Clock className="h-5 w-5 text-green-300" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-2 border border-purple-500/30">
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-3 border border-purple-500/30 min-h-[90px] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-gray-400 mb-1">
@@ -1578,40 +1575,40 @@ export default function MomentumTracker() {
                 )}
               </div>
               {isTraceMode ? (
-                <Trophy className="h-4 w-4 text-purple-300" />
+                <Trophy className="h-5 w-5 text-purple-300" />
               ) : (
-                <TrendingUp className="h-4 w-4 text-purple-300" />
+                <TrendingUp className="h-5 w-5 text-purple-300" />
               )}
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-2 border border-orange-500/30">
+          <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 backdrop-blur-sm rounded-xl p-3 border border-orange-500/30 min-h-[90px] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-gray-400 mb-1">Fastest Mover</p>
                 <p className="text-sm font-bold text-white">{fastestMover?.symbol || "N/A"}</p>
               </div>
-              <Zap className="h-4 w-4 text-orange-300" />
+              <Zap className="h-5 w-5 text-orange-300" />
             </div>
           </div>
         </div>
 
-        {/* Race Mode Banner */}
+        {/* Trace Mode Banner */}
         {isTraceMode && (
           <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Flag className="h-6 w-6 text-green-300" />
                 <div>
-                  <h3 className="text-lg font-bold text-white">🏁 Race Mode Active</h3>
-                  <p className="text-sm text-gray-400">All coins normalized to 0% at race start</p>
+                  <h3 className="text-lg font-bold text-white">🏁 Trace Mode Active</h3>
+                  <p className="text-sm text-gray-400">All coins normalized to 0% at trace start</p>
                 </div>
               </div>
               <button
                 onClick={stopTrace}
                 className="px-4 py-2 bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-300 hover:text-white rounded-lg transition-all text-sm font-medium"
               >
-                Stop Race
+                Stop Trace
               </button>
             </div>
           </div>
@@ -1621,7 +1618,7 @@ export default function MomentumTracker() {
         {watchlistData.coins.length > 0 ? (
           <div
             className="bg-gradient-to-br from-[#1e1f2a] to-[#252631] rounded-xl border border-gray-700/50 overflow-hidden"
-            style={{ minHeight: 0 }}
+            style={{ minHeight: "calc(100vh - 200px)" }}
           >
             {/* Table Controls */}
             <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
@@ -1664,7 +1661,7 @@ export default function MomentumTracker() {
                 {/* Add Coin Button */}
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
+                  className="flex items-center justify-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all text-sm font-medium"
                 >
                   <Plus className="h-4 w-4" />
                   Add Coin
@@ -1673,7 +1670,7 @@ export default function MomentumTracker() {
             </div>
 
             {/* Table */}
-            <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+            <div className="overflow-auto h-full">
               {watchlistViewMode === "cards" ? (
                 renderCardView()
               ) : (
@@ -1687,7 +1684,7 @@ export default function MomentumTracker() {
                         <SortButton field="currentPrice">Current Price</SortButton>
                       </th>
                       <th className="text-center p-2 text-sm font-bold overflow-hidden text-ellipsis whitespace-nowrap">
-                        <SortButton field="changesSinceStart">{isTraceMode ? "Race %" : "% Since Start"}</SortButton>
+                        <SortButton field="changesSinceStart">{isTraceMode ? "Trace %" : "% Since Start"}</SortButton>
                       </th>
                       <th className="text-center p-2 text-sm font-bold overflow-hidden text-ellipsis whitespace-nowrap">
                         <SortButton field="rateOfChange">Rate of Change</SortButton>
@@ -1738,19 +1735,19 @@ export default function MomentumTracker() {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-bold text-white text-sm truncate max-w-[120px]">{coin.symbol}</div>
+                              <div className="font-bold text-white text-base truncate max-w-[120px]">{coin.symbol}</div>
                               <div className="text-xs text-gray-400 truncate max-w-[120px]">{coin.name}</div>
                             </div>
                           </div>
                         </td>
                         <td className="p-2 text-center overflow-hidden text-ellipsis whitespace-nowrap">
-                          <div className="text-white font-mono text-xl font-bold drop-shadow-sm">
+                          <div className="text-white font-mono text-lg font-bold drop-shadow-sm">
                             ${formatPrice(coin.currentPrice)}
                           </div>
                         </td>
                         <td className="p-2 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                           <div
-                            className={`font-bold text-2xl font-extrabold drop-shadow-sm transition-colors duration-300 ${
+                            className={`font-bold text-xl font-extrabold drop-shadow-sm transition-colors duration-300 ${
                               (isTraceMode ? coin.normalizedPrice : coin.changesSinceStart) > 0
                                 ? "text-green-300"
                                 : (isTraceMode ? coin.normalizedPrice : coin.changesSinceStart) < 0
