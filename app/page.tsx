@@ -1,8 +1,8 @@
 "use client"
 
-import CryptoTerminal from "../bloomberg-terminal"
-import "../app/globals.css"
+import MomentumTracker from "../momentum-tracker"
+import "./globals.css"
 
 export default function Page() {
-  return <CryptoTerminal />
+  return <MomentumTracker />
 }
