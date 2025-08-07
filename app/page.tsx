@@ -1,7 +1,6 @@
 "use client"
 
-import MomentumTracker from "../momentum-tracker"
-import "./globals.css"
+import MomentumTracker from "../components/momentum-tracker"
 
 export default function Page() {
   return <MomentumTracker />
