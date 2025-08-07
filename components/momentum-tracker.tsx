@@ -191,7 +191,7 @@ function AddCoinDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700">
         <DialogHeader>
           <DialogTitle>Add Coin to Watchlist</DialogTitle>
           <DialogDescription>Search and select a cryptocurrency to add to your momentum tracker.</DialogDescription>
@@ -556,12 +556,11 @@ export default function MomentumTracker() {
     return [...sortedCoins].sort((a, b) => Math.abs(b.rateOfChange) - Math.abs(a.rateOfChange))[0]
   }, [sortedCoins])
 
-  // Get glow styles based on tracking state
   const getGlowStyles = () => {
     if (isRaceMode) {
-      return "shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/30"
+      return "shadow-2xl shadow-amber-400/30 before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-amber-500/10 before:to-orange-500/10 before:-z-10 before:blur-xl relative"
     } else if (isTracking) {
-      return "shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/30"
+      return "shadow-2xl shadow-emerald-400/30 before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-emerald-500/10 before:to-green-500/10 before:-z-10 before:blur-xl relative"
     }
     return ""
   }
@@ -648,25 +647,25 @@ export default function MomentumTracker() {
       </div>
 
       {/* Stats Cards - Made shorter */}
-      <div className="container mx-auto px-4 py-4">
-        <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 transition-all duration-500 ${getGlowStyles()}`}>
-          <Card className="bg-slate-900 border-slate-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300">Watchlist Size</CardTitle>
-              <Activity className="h-4 w-4 text-slate-400" />
+      <div className="container mx-auto px-4 py-3">
+        <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 mb-3 transition-all duration-500 ${getGlowStyles()}`}>
+          <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0 pt-3">
+              <CardTitle className="text-xs font-medium text-slate-400">Watchlist Size</CardTitle>
+              <Activity className="h-3 w-3 text-slate-500" />
             </CardHeader>
-            <CardContent className="pt-1">
-              <div className="text-xl font-bold text-slate-100">{watchlistData.coins.length}</div>
+            <CardContent className="pt-1 pb-3">
+              <div className="text-lg font-bold text-slate-100">{watchlistData.coins.length}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900 border-slate-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300">{isRaceMode ? "Race Started" : "Tracking Since"}</CardTitle>
-              <Clock className="h-4 w-4 text-slate-400" />
+          <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0 pt-3">
+              <CardTitle className="text-xs font-medium text-slate-400">{isRaceMode ? "Race Started" : "Tracking Since"}</CardTitle>
+              <Clock className="h-3 w-3 text-slate-500" />
             </CardHeader>
-            <CardContent className="pt-1">
-              <div className="text-xl font-bold text-slate-100">
+            <CardContent className="pt-1 pb-3">
+              <div className="text-lg font-bold text-slate-100">
                 {watchlistData.startTime
                   ? new Date(watchlistData.startTime).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -682,30 +681,30 @@ export default function MomentumTracker() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900 border-slate-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300">{isRaceMode ? "Race Leader" : "Best Performer"}</CardTitle>
+          <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0 pt-3">
+              <CardTitle className="text-xs font-medium text-slate-400">{isRaceMode ? "Race Leader" : "Best Performer"}</CardTitle>
               {isRaceMode ? (
-                <Trophy className="h-4 w-4 text-slate-400" />
+                <Trophy className="h-3 w-3 text-slate-500" />
               ) : (
-                <TrendingUp className="h-4 w-4 text-slate-400" />
+                <TrendingUp className="h-3 w-3 text-slate-500" />
               )}
             </CardHeader>
-            <CardContent className="pt-1">
-              <div className="text-xl font-bold text-slate-100">{bestPerformer?.symbol || "N/A"}</div>
+            <CardContent className="pt-1 pb-3">
+              <div className="text-lg font-bold text-slate-100">{bestPerformer?.symbol || "N/A"}</div>
               {bestPerformer && (
                 <p className="text-xs text-emerald-400">{formatPercentage(bestPerformer.changesSinceStart)}</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900 border-slate-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300">Fastest Mover</CardTitle>
-              <Zap className="h-4 w-4 text-slate-400" />
+          <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0 pt-3">
+              <CardTitle className="text-xs font-medium text-slate-400">Fastest Mover</CardTitle>
+              <Zap className="h-3 w-3 text-slate-500" />
             </CardHeader>
-            <CardContent className="pt-1">
-              <div className="text-xl font-bold text-slate-100">{fastestMover?.symbol || "N/A"}</div>
+            <CardContent className="pt-1 pb-3">
+              <div className="text-lg font-bold text-slate-100">{fastestMover?.symbol || "N/A"}</div>
               {fastestMover && (
                 <p className="text-xs text-slate-400">{fastestMover.rateOfChange.toFixed(2)}%/min</p>
               )}
@@ -715,48 +714,61 @@ export default function MomentumTracker() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="bg-slate-800 border-slate-700">
-              <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table View</TabsTrigger>
-              <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart View</TabsTrigger>
-            </TabsList>
-
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search coins..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
-                />
-              </div>
-            </div>
+          <div className="mb-4">
+            {/* TabsList will be moved inside each tab content */}
           </div>
 
           <TabsContent value="table">
-            {watchlistData.coins.length > 0 ? (
-              <Card className="bg-slate-900 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-slate-100">Momentum Watchlist</CardTitle>
-                  <CardDescription className="text-slate-400">Track cryptocurrency momentum from your marked start time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-700">
-                        <TableHead className="text-slate-300">Asset</TableHead>
-                        <TableHead className="text-right text-slate-300">Current Price</TableHead>
-                        <TableHead className="text-right text-slate-300">{isRaceMode ? "Race %" : "% Since Start"}</TableHead>
-                        <TableHead className="text-right text-slate-300">Rate of Change</TableHead>
-                        <TableHead className="text-right text-slate-300">Daily %</TableHead>
-                        <TableHead className="text-center text-slate-300">Momentum</TableHead>
-                        <TableHead className="text-center text-slate-300">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCoins.map((coin, index) => (
-                        <TableRow key={coin.id} className="border-slate-800 hover:bg-slate-800/50">
+            <Card className="bg-slate-900 border-slate-700">
+              <CardContent className="p-0">
+                {/* Table Controls */}
+                <div className="p-4 border-b border-slate-700 flex items-center justify-center space-x-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Search coins..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-64 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
+                    />
+                  </div>
+                  
+                  <TabsList className="bg-slate-800 border-slate-700">
+                    <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table</TabsTrigger>
+                    <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart</TabsTrigger>
+                  </TabsList>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-700">
+                      <TableHead className="text-slate-300">Asset</TableHead>
+                      <TableHead className="text-right text-slate-300">Current Price</TableHead>
+                      <TableHead className="text-right text-slate-300">{isRaceMode ? "Race %" : "% Since Start"}</TableHead>
+                      <TableHead className="text-right text-slate-300">Rate of Change</TableHead>
+                      <TableHead className="text-right text-slate-300">Daily %</TableHead>
+                      <TableHead className="text-center text-slate-300">Momentum</TableHead>
+                      <TableHead className="text-center text-slate-300">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCoins.map((coin, index) => {
+                      // Ensure racePosition is initialized to 1 if it's undefined
+                      const currentRacePosition = coin.racePosition !== undefined ? coin.racePosition : 1;
+
+                      return (
+                        <TableRow 
+                          key={coin.id} 
+                          className={`border-slate-800 hover:bg-slate-800/50 transition-all duration-300 ${
+                            isRaceMode && currentRacePosition <= 3 ? 'bg-gradient-to-r from-amber-500/10 to-transparent' : ''
+                          }`}
+                          style={{
+                            transform: coin.previousPosition && coin.previousPosition !== currentRacePosition
+                              ? `translateY(${(coin.previousPosition - currentRacePosition) * 2}px)` 
+                              : 'translateY(0)',
+                            transition: 'transform 0.5s ease-out, background-color 0.3s ease-out'
+                          }}
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <div
@@ -839,11 +851,12 @@ export default function MomentumTracker() {
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
             ) : (
               <Card className="bg-slate-900 border-slate-700">
                 <CardContent className="flex flex-col items-center justify-center py-16">
@@ -869,14 +882,6 @@ export default function MomentumTracker() {
 
           <TabsContent value="chart">
             <Card className="bg-slate-900 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100">{isRaceMode ? "🏁 Momentum Race" : "Momentum Chart"}</CardTitle>
-                <CardDescription className="text-slate-400">
-                  {isRaceMode
-                    ? "Live race showing normalized performance since start"
-                    : "Visual representation of price momentum over time"}
-                </CardDescription>
-              </CardHeader>
               <CardContent>
                 <div className="h-96">
                   <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
