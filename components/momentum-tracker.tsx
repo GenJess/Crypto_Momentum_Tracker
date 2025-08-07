@@ -719,144 +719,145 @@ export default function MomentumTracker() {
           </div>
 
           <TabsContent value="table">
-            <Card className="bg-slate-900 border-slate-700">
-              <CardContent className="p-0">
-                {/* Table Controls */}
-                <div className="p-4 border-b border-slate-700 flex items-center justify-center space-x-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder="Search coins..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-64 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
-                    />
+            {watchlistData.coins.length > 0 ? (
+              <Card className="bg-slate-900 border-slate-700">
+                <CardContent className="p-0">
+                  {/* Table Controls */}
+                  <div className="p-4 border-b border-slate-700 flex items-center justify-center space-x-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder="Search coins..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-64 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
+                      />
+                    </div>
+                    
+                    <TabsList className="bg-slate-800 border-slate-700">
+                      <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table</TabsTrigger>
+                      <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart</TabsTrigger>
+                    </TabsList>
                   </div>
                   
-                  <TabsList className="bg-slate-800 border-slate-700">
-                    <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table</TabsTrigger>
-                    <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart</TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-700">
-                      <TableHead className="text-slate-300">Asset</TableHead>
-                      <TableHead className="text-right text-slate-300">Current Price</TableHead>
-                      <TableHead className="text-right text-slate-300">{isRaceMode ? "Race %" : "% Since Start"}</TableHead>
-                      <TableHead className="text-right text-slate-300">Rate of Change</TableHead>
-                      <TableHead className="text-right text-slate-300">Daily %</TableHead>
-                      <TableHead className="text-center text-slate-300">Momentum</TableHead>
-                      <TableHead className="text-center text-slate-300">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCoins.map((coin, index) => {
-                      // Ensure racePosition is initialized to 1 if it's undefined
-                      const currentRacePosition = coin.racePosition !== undefined ? coin.racePosition : 1;
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-slate-700">
+                        <TableHead className="text-slate-300">Asset</TableHead>
+                        <TableHead className="text-right text-slate-300">Current Price</TableHead>
+                        <TableHead className="text-right text-slate-300">{isRaceMode ? "Race %" : "% Since Start"}</TableHead>
+                        <TableHead className="text-right text-slate-300">Rate of Change</TableHead>
+                        <TableHead className="text-right text-slate-300">Daily %</TableHead>
+                        <TableHead className="text-center text-slate-300">Momentum</TableHead>
+                        <TableHead className="text-center text-slate-300">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCoins.map((coin, index) => {
+                        // Ensure racePosition is initialized to 1 if it's undefined
+                        const currentRacePosition = coin.racePosition !== undefined ? coin.racePosition : 1;
 
-                      return (
-                        <TableRow 
-                          key={coin.id} 
-                          className={`border-slate-800 hover:bg-slate-800/50 transition-all duration-300 ${
-                            isRaceMode && currentRacePosition <= 3 ? 'bg-gradient-to-r from-amber-500/10 to-transparent' : ''
-                          }`}
-                          style={{
-                            transform: coin.previousPosition && coin.previousPosition !== currentRacePosition
-                              ? `translateY(${(coin.previousPosition - currentRacePosition) * 2}px)` 
-                              : 'translateY(0)',
-                            transition: 'transform 0.5s ease-out, background-color 0.3s ease-out'
-                          }}
-                        >
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                                style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
-                              >
-                                {coin.symbol.charAt(0)}
+                        return (
+                          <TableRow 
+                            key={coin.id} 
+                            className={`border-slate-800 hover:bg-slate-800/50 transition-all duration-300 ${
+                              isRaceMode && currentRacePosition <= 3 ? 'bg-gradient-to-r from-amber-500/10 to-transparent' : ''
+                            }`}
+                            style={{
+                              transform: coin.previousPosition && coin.previousPosition !== currentRacePosition
+                                ? `translateY(${(coin.previousPosition - currentRacePosition) * 2}px)` 
+                                : 'translateY(0)',
+                              transition: 'transform 0.5s ease-out, background-color 0.3s ease-out'
+                            }}
+                          >
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                                  style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
+                                >
+                                  {coin.symbol.charAt(0)}
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-slate-100">{coin.symbol}</div>
+                                  <div className="text-sm text-slate-400">{coin.name}</div>
+                                </div>
                               </div>
-                              <div>
-                                <div className="font-semibold text-slate-100">{coin.symbol}</div>
-                                <div className="text-sm text-slate-400">{coin.name}</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-slate-100">${formatPrice(coin.currentPrice)}</TableCell>
-                          <TableCell className="text-right">
-                            <span
-                              className={`font-semibold ${
-                                coin.changesSinceStart > 0
-                                  ? "text-emerald-400"
-                                  : coin.changesSinceStart < 0
-                                    ? "text-red-400"
-                                    : "text-slate-400"
-                              }`}
-                            >
-                              {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-1">
-                              {Math.abs(coin.rateOfChange) > 0.1 && (
-                                <>
-                                  {coin.rateOfChange > 0 ? (
-                                    <TrendingUp className="h-3 w-3 text-emerald-400" />
-                                  ) : (
-                                    <TrendingDown className="h-3 w-3 text-red-400" />
-                                  )}
-                                </>
-                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-slate-100">${formatPrice(coin.currentPrice)}</TableCell>
+                            <TableCell className="text-right">
                               <span
-                                className={`text-sm ${
-                                  Math.abs(coin.rateOfChange) > 0.5
-                                    ? coin.rateOfChange > 0
-                                      ? "text-emerald-400"
-                                      : "text-red-400"
-                                    : "text-slate-400"
+                                className={`font-semibold ${
+                                  coin.changesSinceStart > 0
+                                    ? "text-emerald-400"
+                                    : coin.changesSinceStart < 0
+                                      ? "text-red-400"
+                                      : "text-slate-400"
                                 }`}
                               >
-                                {coin.rateOfChange.toFixed(2)}%/min
+                                {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
                               </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className={`${coin.dailyChange > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                              {formatPercentage(coin.dailyChange)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <MiniSparkline
-                              data={coin.priceHistory.slice(-20).map((p) => p.price)}
-                              isPositive={coin.changesSinceStart > 0}
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-100">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="bg-slate-800 border-slate-600">
-                                <DropdownMenuItem 
-                                  onClick={() => removeCoin(coin.id)} 
-                                  className="text-red-400 hover:bg-slate-700"
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end space-x-1">
+                                {Math.abs(coin.rateOfChange) > 0.1 && (
+                                  <>
+                                    {coin.rateOfChange > 0 ? (
+                                      <TrendingUp className="h-3 w-3 text-emerald-400" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3 text-red-400" />
+                                    )}
+                                  </>
+                                )}
+                                <span
+                                  className={`text-sm ${
+                                    Math.abs(coin.rateOfChange) > 0.5
+                                      ? coin.rateOfChange > 0
+                                        ? "text-emerald-400"
+                                        : "text-red-400"
+                                      : "text-slate-400"
+                                  }`}
                                 >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Remove
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                                  {coin.rateOfChange.toFixed(2)}%/min
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className={`${coin.dailyChange > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                                {formatPercentage(coin.dailyChange)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <MiniSparkline
+                                data={coin.priceHistory.slice(-20).map((p) => p.price)}
+                                isPositive={coin.changesSinceStart > 0}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-100">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                                  <DropdownMenuItem 
+                                    onClick={() => removeCoin(coin.id)} 
+                                    className="text-red-400 hover:bg-slate-700"
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Remove
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             ) : (
               <Card className="bg-slate-900 border-slate-700">
                 <CardContent className="flex flex-col items-center justify-center py-16">
