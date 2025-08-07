@@ -557,13 +557,13 @@ export default function MomentumTracker() {
   }, [sortedCoins])
 
   const getGlowStyles = () => {
-    if (isRaceMode) {
-      return "shadow-2xl shadow-amber-400/30 before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-amber-500/10 before:to-orange-500/10 before:-z-10 before:blur-xl relative"
-    } else if (isTracking) {
-      return "shadow-2xl shadow-emerald-400/30 before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-emerald-500/10 before:to-green-500/10 before:-z-10 before:blur-xl relative"
-    }
-    return ""
+  if (isRaceMode) {
+    return "shadow-xl shadow-amber-500/20"
+  } else if (isTracking) {
+    return "shadow-xl shadow-emerald-500/20"
   }
+  return ""
+}
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -594,19 +594,7 @@ export default function MomentumTracker() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1 border border-slate-700 rounded-lg p-1">
-                {(["1min", "5min", "15min", "1h", "1d"] as TimeFrame[]).map((tf) => (
-                  <Button
-                    key={tf}
-                    variant={timeFrame === tf ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTimeFrame(tf)}
-                    className={timeFrame === tf ? "bg-slate-600 text-slate-100" : "text-slate-400 hover:text-slate-100"}
-                  >
-                    {tf}
-                  </Button>
-                ))}
-              </div>
+              
 
               {!isRaceMode ? (
                 <Button
@@ -632,14 +620,6 @@ export default function MomentumTracker() {
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Reset
-              </Button>
-
-              <Button 
-                onClick={() => setIsAddModalOpen(true)}
-                className="bg-slate-700 hover:bg-slate-600 text-slate-100"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Coin
               </Button>
             </div>
           </div>
@@ -723,22 +703,88 @@ export default function MomentumTracker() {
               <Card className="bg-slate-900 border-slate-700">
                 <CardContent className="p-0">
                   {/* Table Controls */}
-                  <div className="p-4 border-b border-slate-700 flex items-center justify-center space-x-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                      <Input
-                        placeholder="Search coins..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-64 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
-                      />
-                    </div>
-                    
-                    <TabsList className="bg-slate-800 border-slate-700">
-                      <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table</TabsTrigger>
-                      <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart</TabsTrigger>
-                    </TabsList>
-                  </div>
+                  <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+  <TabsList className="bg-slate-800 border-slate-700">
+    <TabsTrigger value="table" className="data-[state=active]:bg-slate-600 text-slate-300">Table</TabsTrigger>
+    <TabsTrigger value="chart" className="data-[state=active]:bg-slate-600 text-slate-300">Chart</TabsTrigger>
+  </TabsList>
+  
+  <div className="flex items-center space-x-3">
+    <div className="relative">
+      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+      <Input
+        placeholder="Search and add coins..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && searchTerm) {
+            const matchedCoin = MOCK_COINS.find(coin => 
+              !watchlistData.coins.map(c => c.symbol).includes(coin.symbol) &&
+              (coin.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               coin.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
+            if (matchedCoin) {
+              addCoin(matchedCoin)
+              setSearchTerm("")
+            }
+          }
+        }}
+        className="pl-10 w-80 bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400"
+      />
+      {searchTerm && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+          {MOCK_COINS
+            .filter(coin => 
+              !watchlistData.coins.map(c => c.symbol).includes(coin.symbol) &&
+              (coin.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               coin.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
+            .slice(0, 5)
+            .map((coin) => (
+              <button
+                key={coin.symbol}
+                onClick={() => {
+                  addCoin(coin)
+                  setSearchTerm("")
+                }}
+                className="w-full flex items-center space-x-3 p-3 hover:bg-slate-700 transition-colors text-left"
+              >
+                <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                  {coin.symbol.charAt(0)}
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-100 text-sm">{coin.symbol}</div>
+                  <div className="text-xs text-slate-400">{coin.name}</div>
+                </div>
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+    
+    <Button 
+      onClick={() => {
+        if (searchTerm) {
+          const matchedCoin = MOCK_COINS.find(coin => 
+            !watchlistData.coins.map(c => c.symbol).includes(coin.symbol) &&
+            (coin.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             coin.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          )
+          if (matchedCoin) {
+            addCoin(matchedCoin)
+            setSearchTerm("")
+          }
+        } else {
+          setIsAddModalOpen(true)
+        }
+      }}
+      className="bg-slate-700 hover:bg-slate-600 text-slate-100"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add Coin
+    </Button>
+  </div>
+</div>
                   
                   <Table>
                     <TableHeader>
@@ -881,17 +927,51 @@ export default function MomentumTracker() {
             )}
           </TabsContent>
 
-          <TabsContent value="chart">
-            <Card className="bg-slate-900 border-slate-700">
-              <CardContent>
-                <div className="h-96">
-                  <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          
+<TabsContent value="chart">
+  <Card className="bg-slate-900 border-slate-700">
+    <CardHeader className="border-b border-slate-700">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("table")}
+            className="text-slate-400 hover:text-slate-100"
+          >
+            ← Back to Table
+          </Button>
+          <div>
+            <CardTitle className="text-slate-100">Momentum Chart</CardTitle>
+            <CardDescription className="text-slate-400">Real-time price movements</CardDescription>
+          </div>
+        </div>
+        
+        {/* Time Frame Selector moved here */}
+        <div className="flex items-center space-x-1 border border-slate-700 rounded-lg p-1">
+          {(["1min", "5min", "15min", "1h", "1d"] as TimeFrame[]).map((tf) => (
+            <Button
+              key={tf}
+              variant={timeFrame === tf ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setTimeFrame(tf)}
+              className={timeFrame === tf ? "bg-slate-600 text-slate-100" : "text-slate-400 hover:text-slate-100"}
+            >
+              {tf}
+            </Button>
+          ))}
+        </div>
       </div>
+    </CardHeader>
+    <CardContent>
+      <div className="h-96">
+        <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
+      </div>
+    </CardContent>
+  </Card>
+</TabsContent>
+        
+      </Tabs>
+    </div>
 
       {/* Add Coin Dialog */}
       <AddCoinDialog
@@ -900,6 +980,6 @@ export default function MomentumTracker() {
         onAdd={addCoin}
         existingSymbols={watchlistData.coins.map((c) => c.symbol)}
       />
-    </div>
+    
   )
 }
