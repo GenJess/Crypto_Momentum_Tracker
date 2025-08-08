@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 body {
-  @apply bg-bg-primary text-text-primary font-sans;
+  background-color: theme('colors.bg-primary');
+  color: theme('colors.text-primary');
+  font-family: theme('fontFamily.sans');
   line-height: 1.6;
   letter-spacing: -0.01em;
   font-weight: 400;
