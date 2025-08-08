@@ -5,7 +5,46 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'bg-primary': '#1a1b23',
+        'bg-secondary': '#21222d',
+        'bg-tertiary': '#2a2d3a',
+        'bg-hover': '#2f323f',
+        'purple-primary': '#8b5cf6',
+        'purple-glow': '#9d4edd',
+        'purple-light': 'rgba(139, 92, 246, 0.15)',
+        'purple-border': 'rgba(139, 92, 246, 0.3)',
+        'accent-hot': '#ff007f',
+        'accent-cyan': '#00d9ff',
+        'accent-success': '#00ff88',
+        'accent-warning': '#ffaa00',
+        'text-primary': '#f8f8f2',
+        'text-secondary': '#a3a3a3',
+        'text-muted': '#6b7280',
+        'border-primary': '#3a3d4a',
+        'border-secondary': '#4a4d5a',
+      },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'glow-hot': '0 0 20px rgba(255, 0, 127, 0.4)',
+        'glow-cyan': '0 0 16px rgba(0, 217, 255, 0.3)',
+        'glow-success': '0 0 14px rgba(0, 255, 136, 0.3)',
+        'glow-purple': '0 0 12px rgba(139, 92, 246, 0.3)',
+        'glow-subtle': '0 4px 20px rgba(0, 0, 0, 0.15)',
+      },
+      animation: {
+        shimmer: 'shimmer 3s infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { left: '-100%' },
+          '100%': { left: '100%' },
+        },
+      },
+    },
   },
   plugins: [],
 }

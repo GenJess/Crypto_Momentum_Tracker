@@ -1,55 +1,60 @@
 import React from 'react';
+import MomentumBadge from './MomentumBadge';
+import { getMomentumCategory } from '../utils/momentum';
 
 const WatchlistTable = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) => {
-  const getCoinDetails = (coinId) => {
-    return allCoins?.find(coin => coin.id === coinId);
-  };
-
   const coinIds = Object.keys(watchlistData || {});
 
   if (isLoading) {
-    return <div className="text-center">Loading watchlist data...</div>;
+    return <div className="text-center p-8">Loading watchlist data...</div>;
   }
 
   if (!watchlistData || coinIds.length === 0) {
-    return <div className="text-center">Your watchlist is empty. Add coins using the search bar above.</div>;
+    return <div className="text-center p-8 text-text-secondary">Your watchlist is empty. Add coins using the search bar above.</div>;
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-gray-800 border border-gray-700">
+      <table className="w-full">
         <thead>
-          <tr className="bg-gray-700">
-            <th className="p-2 text-left">Name</th>
-            <th className="p-2 text-right">Price (USD)</th>
-            <th className="p-2 text-right">24h Change (%)</th>
-            <th className="p-2 text-center">Actions</th>
+          <tr>
+            <th className="p-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Asset</th>
+            <th className="p-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Price</th>
+            <th className="p-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">24h Change</th>
+            <th className="p-4 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider">Momentum</th>
+            <th className="p-4 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody>
           {coinIds.map(coinId => {
-            const coinDetails = getCoinDetails(coinId);
+            const coinDetails = allCoins?.find(c => c.id === coinId);
             const data = watchlistData[coinId];
             const price = data?.usd;
             const change = data?.usd_24h_change;
+            const momentum = getMomentumCategory(coinId); // Using centralized function
 
             return (
-              <tr key={coinId} className="border-t border-gray-700 hover:bg-gray-700/50">
-                <td className="p-2 flex items-center">
-                  <img src={coinDetails?.image} alt={coinDetails?.name} className="w-6 h-6 mr-3" />
-                  <div>
-                    <div>{coinDetails?.name}</div>
-                    <div className="text-sm text-gray-400">{coinDetails?.symbol.toUpperCase()}</div>
+              <tr key={coinId} className="border-t border-border-primary hover:bg-bg-hover transition-colors">
+                <td className="p-4">
+                  <div className="flex items-center gap-4">
+                    <img src={coinDetails?.image} alt={coinDetails?.name} className="w-9 h-9" />
+                    <div>
+                      <div className="font-semibold text-text-primary">{coinDetails?.name}</div>
+                      <div className="text-sm text-text-muted">{coinDetails?.symbol.toUpperCase()}</div>
+                    </div>
                   </div>
                 </td>
-                <td className="p-2 text-right font-mono">${price?.toLocaleString()}</td>
-                <td className={`p-2 text-right font-mono ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <td className="p-4 text-right font-mono text-text-primary">${price?.toLocaleString()}</td>
+                <td className={`p-4 text-right font-mono ${change >= 0 ? 'text-accent-success' : 'text-accent-hot'}`}>
                   {change?.toFixed(2)}%
                 </td>
-                <td className="p-2 text-center">
+                <td className="p-4 text-center">
+                    <MomentumBadge momentum={momentum} />
+                </td>
+                <td className="p-4 text-center">
                   <button
                     onClick={() => onRemoveCoin(coinId)}
-                    className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded"
+                    className="px-3 py-1 text-xs bg-red-600/50 text-red-300 hover:bg-red-600/80 hover:text-white rounded-md transition-all"
                   >
                     Remove
                   </button>
