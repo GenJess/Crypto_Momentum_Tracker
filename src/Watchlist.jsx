@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import WatchlistTable from './components/WatchlistTable';
-import WatchlistCards from './components/WatchlistCards'; // Will create this next
+import WatchlistCards from './components/WatchlistCards';
 
 const Watchlist = ({ watchlist, allCoins, onRemoveCoin }) => {
   const [view, setView] = useState('table'); // 'table' or 'cards'
@@ -27,15 +27,15 @@ const Watchlist = ({ watchlist, allCoins, onRemoveCoin }) => {
   const isLoading = isLoadingWatchlist && watchlist.length > 0;
 
   return (
-    <div className="bg-bg-secondary border border-border-primary rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between p-6 border-b border-border-primary bg-gradient-to-r from-bg-secondary to-bg-tertiary">
-        <h2 className="text-xl font-semibold text-text-primary flex items-center gap-3">
+    <div className="bg-bgSecondary border border-borderPrimary rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-6 border-b border-borderPrimary bg-gradient-to-r from-bgSecondary to-bgTertiary">
+        <h2 className="text-xl font-semibold text-textPrimary flex items-center gap-3">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z"/></svg>
           Live Watchlist
         </h2>
-        <div className="flex gap-1 bg-bg-tertiary p-1 rounded-xl border border-border-primary">
-          <button onClick={() => setView('table')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'table' ? 'bg-purple-primary text-white shadow-glow-purple' : 'text-text-secondary hover:bg-bg-hover'}`}>Table</button>
-          <button onClick={() => setView('cards')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'cards' ? 'bg-purple-primary text-white shadow-glow-purple' : 'text-text-secondary hover:bg-bg-hover'}`}>Cards</button>
+        <div className="flex gap-1 bg-bgTertiary p-1 rounded-xl border border-borderPrimary">
+          <button onClick={() => setView('table')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'table' ? 'bg-purplePrimary text-white shadow-glowPurple' : 'text-textSecondary hover:bg-bgHover'}`}>Table</button>
+          <button onClick={() => setView('cards')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'cards' ? 'bg-purplePrimary text-white shadow-glowPurple' : 'text-textSecondary hover:bg-bgHover'}`}>Cards</button>
         </div>
       </div>
 

@@ -2,21 +2,21 @@ import React from 'react';
 
 const StatCard = ({ title, value, change, changeType, icon, suffix }) => {
   const momentumClasses = {
-    positive: 'text-accent-success bg-accent-success/10 border border-accent-success/20',
-    active: 'text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20',
-    high: 'text-accent-hot bg-accent-hot/10 border border-accent-hot/20',
+    positive: 'text-accentSuccess bg-accentSuccess/10 border border-accentSuccess/20',
+    active: 'text-accentCyan bg-accentCyan/10 border border-accentCyan/20',
+    high: 'text-accentHot bg-accentHot/10 border border-accentHot/20',
   };
 
   return (
-    <div className="bg-bg-secondary border border-border-primary rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-glow-subtle hover:border-purple-border relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-primary to-transparent opacity-70" />
+    <div className="bg-bgSecondary border border-borderPrimary rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-glowSubtle hover:border-purpleBorder relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purplePrimary to-transparent opacity-70" />
       <div className="flex items-center justify-between mb-5">
-        <span className="text-sm font-medium text-text-secondary">{title}</span>
-        <div className="p-2 rounded-lg bg-purple-light">{icon}</div>
+        <span className="text-sm font-medium text-textSecondary">{title}</span>
+        <div className="p-2 rounded-lg bg-purpleLight">{icon}</div>
       </div>
-      <div className="text-3xl font-bold text-text-primary mb-3">
+      <div className="text-3xl font-bold text-textPrimary mb-3">
         {value}
-        {suffix && <span className="text-sm text-text-secondary font-medium ml-2">{suffix}</span>}
+        {suffix && <span className="text-sm text-textSecondary font-medium ml-2">{suffix}</span>}
       </div>
       <div className={`text-sm font-semibold flex items-center gap-1.5 px-3 py-1 rounded-full w-fit ${momentumClasses[changeType]}`}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

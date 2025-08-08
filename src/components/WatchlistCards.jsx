@@ -10,7 +10,7 @@ const WatchlistCards = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) =>
   }
 
   if (!watchlistData || coinIds.length === 0) {
-    return <div className="text-center p-8 text-text-secondary">Your watchlist is empty.</div>;
+    return <div className="text-center p-8 text-textSecondary">Your watchlist is empty.</div>;
   }
 
   return (
@@ -23,25 +23,25 @@ const WatchlistCards = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) =>
         const momentum = getMomentumCategory(coinId); // Using centralized function
 
         return (
-          <div key={coinId} className="bg-bg-tertiary border border-border-primary rounded-xl p-4 transition-all hover:-translate-y-1 hover:border-purple-border">
+          <div key={coinId} className="bg-bgTertiary border border-borderPrimary rounded-xl p-4 transition-all hover:-translate-y-1 hover:border-purpleBorder">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <img src={coinDetails?.image} alt={coinDetails?.name} className="w-9 h-9" />
                 <div>
-                  <div className="font-semibold text-text-primary">{coinDetails?.name}</div>
-                  <div className="text-sm text-text-muted">{coinDetails?.symbol.toUpperCase()}</div>
+                  <div className="font-semibold text-textPrimary">{coinDetails?.name}</div>
+                  <div className="text-sm text-textMuted">{coinDetails?.symbol.toUpperCase()}</div>
                 </div>
               </div>
               <button
                 onClick={() => onRemoveCoin(coinId)}
-                className="text-text-muted hover:text-red-500 transition-colors"
+                className="text-textMuted hover:text-red-500 transition-colors"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
 
-            <div className="text-2xl font-mono text-text-primary mb-2">${price?.toLocaleString()}</div>
-            <div className={`text-sm font-semibold mb-4 ${change >= 0 ? 'text-accent-success' : 'text-accent-hot'}`}>
+            <div className="text-2xl font-mono text-textPrimary mb-2">${price?.toLocaleString()}</div>
+            <div className={`text-sm font-semibold mb-4 ${change >= 0 ? 'text-accentSuccess' : 'text-accentHot'}`}>
               {change?.toFixed(2)}% (24h)
             </div>
 

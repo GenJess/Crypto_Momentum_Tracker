@@ -10,7 +10,7 @@ const WatchlistTable = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) =>
   }
 
   if (!watchlistData || coinIds.length === 0) {
-    return <div className="text-center p-8 text-text-secondary">Your watchlist is empty. Add coins using the search bar above.</div>;
+    return <div className="text-center p-8 text-textSecondary">Your watchlist is empty. Add coins using the search bar above.</div>;
   }
 
   return (
@@ -18,11 +18,11 @@ const WatchlistTable = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) =>
       <table className="w-full">
         <thead>
           <tr>
-            <th className="p-4 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Asset</th>
-            <th className="p-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Price</th>
-            <th className="p-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">24h Change</th>
-            <th className="p-4 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider">Momentum</th>
-            <th className="p-4 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider">Actions</th>
+            <th className="p-4 text-left text-xs font-semibold text-textSecondary uppercase tracking-wider">Asset</th>
+            <th className="p-4 text-right text-xs font-semibold text-textSecondary uppercase tracking-wider">Price</th>
+            <th className="p-4 text-right text-xs font-semibold text-textSecondary uppercase tracking-wider">24h Change</th>
+            <th className="p-4 text-center text-xs font-semibold text-textSecondary uppercase tracking-wider">Momentum</th>
+            <th className="p-4 text-center text-xs font-semibold text-textSecondary uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -34,18 +34,18 @@ const WatchlistTable = ({ watchlistData, allCoins, onRemoveCoin, isLoading }) =>
             const momentum = getMomentumCategory(coinId); // Using centralized function
 
             return (
-              <tr key={coinId} className="border-t border-border-primary hover:bg-bg-hover transition-colors">
+              <tr key={coinId} className="border-t border-borderPrimary hover:bg-bgHover transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-4">
                     <img src={coinDetails?.image} alt={coinDetails?.name} className="w-9 h-9" />
                     <div>
-                      <div className="font-semibold text-text-primary">{coinDetails?.name}</div>
-                      <div className="text-sm text-text-muted">{coinDetails?.symbol.toUpperCase()}</div>
+                      <div className="font-semibold text-textPrimary">{coinDetails?.name}</div>
+                      <div className="text-sm text-textMuted">{coinDetails?.symbol.toUpperCase()}</div>
                     </div>
                   </div>
                 </td>
-                <td className="p-4 text-right font-mono text-text-primary">${price?.toLocaleString()}</td>
-                <td className={`p-4 text-right font-mono ${change >= 0 ? 'text-accent-success' : 'text-accent-hot'}`}>
+                <td className="p-4 text-right font-mono text-textPrimary">${price?.toLocaleString()}</td>
+                <td className={`p-4 text-right font-mono ${change >= 0 ? 'text-accentSuccess' : 'text-accentHot'}`}>
                   {change?.toFixed(2)}%
                 </td>
                 <td className="p-4 text-center">

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 body {
-  background-color: theme('colors.bg-primary');
-  color: theme('colors.text-primary');
+  background-color: theme('colors.bgPrimary');
+  color: theme('colors.textPrimary');
   font-family: theme('fontFamily.sans');
   line-height: 1.6;
   letter-spacing: -0.01em;
