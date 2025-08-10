@@ -1,35 +1,16 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import {
-  TrendingUp,
-  TrendingDown,
-  Search,
-  Plus,
-  X,
-  RotateCcw,
-  Flag,
-  Pause,
-  Activity,
-  Clock,
-  Trophy,
-  Zap,
-  MoreHorizontal,
-  LineChart,
-  LayoutList,
-} from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
+import { SearchIcon, Plus, X, RotateCcw, Flag, Pause, MoreHorizontal, LineChart, LayoutList } from "lucide-react"
+import { Inter } from "next/font/google"
+
+const inter = Inter({ subsets: ["latin"] })
 
 // Types
 interface CoinData {
@@ -67,30 +48,7 @@ const MOCK_COINS = [
   { symbol: "LINKUSDT", name: "Chainlink", basePrice: 14.23 },
 ]
 
-const COIN_COLORS = ["#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#f97316", "#ec4899", "#06b6d4"]
-
-// Brand logo
-function Brand() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="purp-brand">
-        {/* Chain-like logo */}
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M8 8L12 4L16 8L12 12L8 8Z" opacity="0.8"></path>
-          <path d="M8 16L12 12L16 16L12 20L8 16Z" opacity="0.6"></path>
-          <path d="M4 12L8 8L12 12L8 16L4 12Z" opacity="0.4"></path>
-          <path d="M12 12L16 8L20 12L16 16L12 12Z" opacity="0.4"></path>
-        </svg>
-      </div>
-      <div className="leading-tight">
-        <div className="text-lg font-semibold tracking-tight bg-gradient-to-br from-[var(--text-primary)] to-[var(--purple-primary)] bg-clip-text text-transparent">
-          PurpDex
-        </div>
-        <div className="text-[11px] text-[color:var(--text-secondary)]">ROC Crypto Momentum</div>
-      </div>
-    </div>
-  )
-}
+const COIN_COLORS = ["#8b5cf6", "#00d9ff", "#00ff88", "#ff007f", "#ffaa00", "#9d4edd", "#ec4899", "#06b6d4"]
 
 // Utilities
 const generateCoinId = (symbol: string) => `${symbol}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
@@ -190,7 +148,7 @@ const useWebSocket = (symbols: string[], timeFrame: TimeFrame) => {
   return data
 }
 
-// Chart
+// Chart (kept; styles rely on container background)
 function RaceChart({
   coins,
   startTime,
@@ -225,8 +183,8 @@ function RaceChart({
     const range = Math.max(max - min, 2)
 
     // grid
-    ctx.strokeStyle = "#334155"
-    ctx.lineWidth = 0.5
+    ctx.strokeStyle = "#3a3d4a"
+    ctx.lineWidth = 0.6
     ctx.setLineDash([3, 3])
     for (let i = 0; i <= 5; i++) {
       const y = padding + (i / 5) * h
@@ -235,7 +193,7 @@ function RaceChart({
       ctx.lineTo(padding + w, y)
       ctx.stroke()
       const v = max - (i / 5) * range
-      ctx.fillStyle = "#94a3b8"
+      ctx.fillStyle = "#a3a3a3"
       ctx.font = "10px ui-monospace, SFMono-Regular, Menlo, monospace"
       ctx.textAlign = "right"
       ctx.fillText(`${v.toFixed(1)}%`, padding - 6, y + 3)
@@ -244,7 +202,7 @@ function RaceChart({
     // zero-line
     const zeroY = padding + ((max - 0) / range) * h
     ctx.setLineDash([])
-    ctx.strokeStyle = "#64748b"
+    ctx.strokeStyle = "#6b7280"
     ctx.lineWidth = 1.25
     ctx.beginPath()
     ctx.moveTo(padding, zeroY)
@@ -276,7 +234,7 @@ function RaceChart({
       ctx.beginPath()
       ctx.arc(x, y, 3.5, 0, 2 * Math.PI)
       ctx.fill()
-      ctx.fillStyle = "#e2e8f0"
+      ctx.fillStyle = "#f8f8f2"
       ctx.font = "12px ui-sans-serif, system-ui"
       ctx.textAlign = "left"
       ctx.fillText(`${coin.symbol}`, x + 8, y + 4)
@@ -285,7 +243,7 @@ function RaceChart({
 
   if (!startTime || coins.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-slate-400">
+      <div className="h-full flex items-center justify-center text-[var(--text-secondary)]">
         <div className="text-center">
           <Flag className="h-10 w-10 mx-auto mb-3 opacity-60" />
           <p className="text-sm">Start a race to see the momentum chart</p>
@@ -296,7 +254,7 @@ function RaceChart({
   return <canvas ref={canvasRef} className="w-full h-full" />
 }
 
-// Typeahead Add
+// Typeahead Add (PurpDex input styling)
 function AddCoinTypeahead({
   value,
   onValueChange,
@@ -326,70 +284,72 @@ function AddCoinTypeahead({
   }, [value, filtered.length])
 
   return (
-    <div className="relative w-[26rem] max-w-full">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
-        <Input
-          aria-label="Search coins"
-          placeholder="Search coins (e.g., BTC, ETH) — press Enter to add"
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault()
-              onAddFirstMatch()
-            } else if (e.key === "Escape") {
-              onValueChange("")
-              setOpen(false)
-            }
+    <div className="pd-search w-full">
+      <input
+        aria-label="Search coins"
+        placeholder="Search crypto assets — press Enter to add"
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            onAddFirstMatch()
+          } else if (e.key === "Escape") {
+            onValueChange("")
+            setOpen(false)
+          }
+        }}
+      />
+      <span className="icon">
+        <SearchIcon className="h-4 w-4" />
+      </span>
+      {value && (
+        <button
+          aria-label="Clear search"
+          className="clear"
+          onClick={() => {
+            onValueChange("")
+            setOpen(false)
           }}
-          className="purp-input pl-9 placeholder:text-[color:var(--text-muted)]"
-        />
-      </div>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <span className="sr-only">Toggle suggestions</span>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-[26rem] p-0 bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-          <Command shouldFilter={false} className="bg-transparent">
-            <CommandInput
-              value={value}
-              onValueChange={(v) => onValueChange(v)}
-              placeholder="Filter coins..."
-              className="hidden"
-            />
-            <CommandList className="max-h-64">
-              {filtered.length === 0 ? (
-                <CommandEmpty>No coins found</CommandEmpty>
-              ) : (
-                <CommandGroup heading="Matches">
-                  {filtered.map((coin) => (
-                    <CommandItem
-                      key={coin.symbol}
-                      value={coin.symbol}
-                      onSelect={() => {
-                        onSelectCoin(coin)
-                        onValueChange("")
-                        setOpen(false)
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="size-6 rounded-full bg-slate-700 text-white text-xs font-semibold grid place-items-center">
-                          {coin.symbol.charAt(0)}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-100">{coin.symbol}</span>
-                          <span className="text-[11px] text-slate-400">{coin.name}</span>
-                        </div>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <Command
+        shouldFilter={false}
+        className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg mt-2"
+      >
+        <CommandInput value={value} onValueChange={onValueChange} placeholder="Filter..." className="hidden" />
+        <CommandList className="max-h-64">
+          {filtered.length === 0 ? (
+            <CommandEmpty className="p-3 text-[var(--text-secondary)]">No coins found</CommandEmpty>
+          ) : (
+            <CommandGroup heading="Matches">
+              {filtered.map((coin) => (
+                <CommandItem
+                  key={coin.symbol}
+                  value={coin.symbol}
+                  onSelect={() => {
+                    onSelectCoin(coin)
+                    onValueChange("")
+                    setOpen(false)
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="size-6 rounded-full bg-[color:var(--bg-tertiary)] text-white text-xs font-semibold grid place-items-center">
+                      {coin.symbol.charAt(0)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold">{coin.symbol}</span>
+                      <span className="text-[11px] text-[var(--text-secondary)]">{coin.name}</span>
+                    </div>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </Command>
     </div>
   )
 }
@@ -560,474 +520,398 @@ export default function MomentumTracker() {
     [sortedCoins],
   )
 
-  // Visual accents: remove heavy drop-shadows; use subtle ring accents
-  const accentRing = isRaceMode ? "ring-1 ring-amber-400/30" : isTracking ? "ring-1 ring-emerald-400/30" : "ring-0"
-
   return (
-    <div className="purpdex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-40 border-b border-[var(--border-primary)] bg-[color:var(--bg-secondary)]/90 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--bg-secondary)]/60">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-6">
-              <Brand />
-              <div className="hidden md:flex items-center gap-2">
-                <div
-                  className={`size-2 rounded-full ${isTracking ? "bg-[var(--accent-success)] shadow-[var(--shadow-glow-success)]" : "bg-[var(--text-muted)]"}`}
-                />
-                <Badge
-                  variant={isRaceMode ? "default" : isTracking ? "secondary" : "outline"}
-                  className={
-                    isRaceMode
-                      ? "bg-[var(--accent-warning)]/20 text-[var(--accent-warning)] border border-[var(--border-primary)]"
-                      : isTracking
-                        ? "bg-[var(--accent-success)]/20 text-[var(--accent-success)] border border-[var(--border-primary)]"
-                        : "text-[color:var(--text-secondary)] border border-[var(--border-primary)]"
-                  }
-                >
-                  {isRaceMode ? "Race Active" : isTracking ? "Tracking" : "Ready"}
-                </Badge>
-              </div>
+    <div className={`purpdex-theme ${inter.className}`}>
+      <div className="pd-container">
+        {/* Header */}
+        <header className="pd-header">
+          <div className="pd-brand">
+            <div className="pd-brand-logo">
+              {/* chain-like logo */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 8L12 4L16 8L12 12L8 8Z" opacity="0.8" />
+                <path d="M8 16L12 12L16 16L12 20L8 16Z" opacity="0.6" />
+                <path d="M4 12L8 8L12 12L8 16L4 12Z" opacity="0.4" />
+                <path d="M12 12L16 8L20 12L16 16L12 12Z" opacity="0.4" />
+              </svg>
             </div>
+            <div>
+              <div className="pd-brand-title">PurpDex</div>
+              <div className="pd-brand-sub">Rate of Change (ROC) Tracker • Ink Chain</div>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg p-1">
-                <Button
-                  size="sm"
-                  variant={activeTab === "table" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("table")}
-                  className={
-                    activeTab === "table"
-                      ? "bg-[var(--purple-primary)] text-white"
-                      : "text-[color:var(--text-secondary)] hover:text-[var(--text-primary)]"
-                  }
-                  aria-pressed={activeTab === "table"}
-                >
-                  <span className="mr-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path d="M3 10h18M3 6h18M3 14h18M3 18h18" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                  Table
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeTab === "chart" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("chart")}
-                  className={
-                    activeTab === "chart"
-                      ? "bg-[var(--purple-primary)] text-white"
-                      : "text-[color:var(--text-secondary)] hover:text-[var(--text-primary)]"
-                  }
-                  aria-pressed={activeTab === "chart"}
-                >
-                  <span className="mr-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M3 3v18M21 21H3M7 16v-4M11 21V8M15 21V12M19 21V6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  Chart
-                </Button>
-              </div>
+          <div className="hidden md:flex items-center gap-3">
+            <div className="pd-live" style={{ display: isTracking ? "inline-flex" : "none" }}>
+              <span className="pd-live-dot" />
+              TRACKING
+            </div>
+            <Badge
+              variant="outline"
+              className={
+                isRaceMode
+                  ? "border-0 bg-[var(--purple-primary)] text-white"
+                  : isTracking
+                    ? "border-0 bg-[var(--accent-success)] text-[#061d12]"
+                    : "border border-[var(--border-primary)] text-[var(--text-secondary)]"
+              }
+            >
+              {isRaceMode ? "Race Active" : isTracking ? "Tracking" : "Ready"}
+            </Badge>
+          </div>
+        </header>
 
-              {!isRaceMode ? (
-                <Button
-                  onClick={startRace}
-                  disabled={watchlistData.coins.length === 0}
-                  className="purp-btn purp-btn-success"
-                >
-                  <Flag className="mr-2 h-4 w-4" />
-                  Start Race
-                </Button>
-              ) : (
-                <Button onClick={stopRace} className="purp-btn purp-btn-hot">
-                  <Pause className="mr-2 h-4 w-4" />
-                  Stop Race
-                </Button>
+        {/* Stats */}
+        <div className="roc-stats">
+          <div className="roc-card largest-mover">
+            <div className="roc-card-title">{isRaceMode ? "Race Leader" : "Best Performer"}</div>
+            <div className="roc-card-value">
+              {bestPerformer?.symbol || "N/A"}{" "}
+              {bestPerformer && (
+                <span className={bestPerformer.changesSinceStart >= 0 ? "momentum-positive" : "momentum-negative"}>
+                  {` ${formatPercentage(bestPerformer.changesSinceStart)}`}
+                </span>
               )}
-
-              <Button
-                variant="outline"
-                onClick={resetTracking}
-                disabled={!isTracking}
-                className="purp-btn purp-btn-primary bg-[color:var(--bg-tertiary)] text-[color:var(--text-secondary)] hover:bg-[color:var(--bg-hover)] border border-[var(--border-primary)]"
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Reset
-              </Button>
+            </div>
+            <div className="roc-card-subtitle">{bestPerformer ? "Top performer since start" : "Add coins & start"}</div>
+          </div>
+          <div className="roc-card most-active">
+            <div className="roc-card-title">Most Active</div>
+            <div className="roc-card-value">
+              {fastestMover?.symbol || "N/A"}{" "}
+              {fastestMover && (
+                <span className="momentum-active">{`${fastestMover.rateOfChange.toFixed(2)}%/min`}</span>
+              )}
+            </div>
+            <div className="roc-card-subtitle">Fastest % change/min</div>
+          </div>
+          <div className="roc-card live-tracking">
+            <div className="roc-card-title">{isRaceMode ? "Race Started" : "Tracking Since"}</div>
+            <div className="roc-card-value">
+              {watchlistData.startTime
+                ? new Date(watchlistData.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "Not Started"}
+            </div>
+            <div className="roc-card-subtitle">
+              {watchlistData.startTime ? `${Math.floor((Date.now() - watchlistData.startTime) / 60000)}m elapsed` : ""}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-6">
-        {/* Stats */}
-        <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 ${accentRing} rounded-xl`}>
-          <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium text-[color:var(--text-secondary)]">Watchlist Size</CardTitle>
-              <Activity className="h-4 w-4 text-[color:var(--text-secondary)]" />
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl font-semibold">{watchlistData.coins.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium text-[color:var(--text-secondary)]">
-                {isRaceMode ? "Race Started" : "Tracking Since"}
-              </CardTitle>
-              <Clock className="h-4 w-4 text-[color:var(--text-secondary)]" />
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl font-semibold">
-                {watchlistData.startTime
-                  ? new Date(watchlistData.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                  : "Not Started"}
-              </div>
-              {watchlistData.startTime && (
-                <div className="text-xs text-slate-400">
-                  {Math.floor((Date.now() - watchlistData.startTime) / 60000)}m elapsed
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium text-[color:var(--text-secondary)]">
-                {isRaceMode ? "Race Leader" : "Best Performer"}
-              </CardTitle>
-              {isRaceMode ? (
-                <Trophy className="h-4 w-4 text-[color:var(--text-secondary)]" />
-              ) : (
-                <TrendingUp className="h-4 w-4 text-[color:var(--text-secondary)]" />
-              )}
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl font-semibold">{bestPerformer?.symbol || "N/A"}</div>
-              {bestPerformer && (
-                <div className="text-xs text-[color:var(--accent-success)]">
-                  {formatPercentage(bestPerformer.changesSinceStart)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium text-[color:var(--text-secondary)]">Fastest Mover</CardTitle>
-              <Zap className="h-4 w-4 text-[color:var(--text-secondary)]" />
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl font-semibold">{fastestMover?.symbol || "N/A"}</div>
-              {fastestMover && (
-                <div className="text-xs text-[color:var(--text-secondary)]">
-                  {fastestMover.rateOfChange.toFixed(2)}%/min
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Controls */}
+        <div className="controls-row">
+          <AddCoinTypeahead
+            value={query}
+            onValueChange={setQuery}
+            existingSymbols={watchlistData.coins.map((c) => c.symbol)}
+            onSelectCoin={(coin) => addCoin(coin)}
+            onAddFirstMatch={addFirstMatch}
+          />
+          {!isRaceMode ? (
+            <button
+              onClick={startRace}
+              disabled={watchlistData.coins.length === 0}
+              className="pd-btn pd-btn-start"
+              aria-label="Start Race"
+            >
+              <Flag className="h-4 w-4" />
+              Start ROC
+            </button>
+          ) : (
+            <button onClick={stopRace} className="pd-btn pd-btn-reset" aria-label="Stop Race">
+              <Pause className="h-4 w-4" />
+              Stop Race
+            </button>
+          )}
+          <button
+            onClick={resetTracking}
+            disabled={!isTracking}
+            className="pd-btn pd-btn-reset"
+            aria-label="Reset Tracking"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </button>
         </div>
 
-        {/* Main */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "table" | "chart")} className="space-y-4">
-          <TabsContent value="table">
-            <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-              <CardHeader className="border-b border-[var(--border-primary)]">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  {/* View toggle */}
-                  <TabsList className="bg-[var(--bg-primary)] border border-[var(--border-primary)]">
-                    <TabsTrigger
-                      value="table"
-                      className="data-[state=active]:bg-[var(--bg-tertiary)] data-[state=active]:text-[var(--text-primary)] text-[color:var(--text-secondary)]"
-                    >
-                      <LayoutList className="mr-2 h-4 w-4" />
-                      Table
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="chart"
-                      onClick={() => setActiveTab("chart")}
-                      className="data-[state=active]:bg-[var(--bg-tertiary)] data-[state=active]:text-[var(--text-primary)] text-[color:var(--text-secondary)]"
-                    >
-                      <LineChart className="mr-2 h-4 w-4" />
-                      Chart
-                    </TabsTrigger>
-                  </TabsList>
+        {/* Table/Card wrapper header */}
+        <div className="pd-table-wrap">
+          <div className="pd-table-head">
+            <h3 className="pd-table-title">Assets</h3>
 
-                  {/* Search + Add */}
-                  <div className="flex items-center gap-2">
-                    <AddCoinTypeahead
-                      value={query}
-                      onValueChange={setQuery}
-                      existingSymbols={watchlistData.coins.map((c) => c.symbol)}
-                      onSelectCoin={(coin) => addCoin(coin)}
-                      onAddFirstMatch={addFirstMatch}
-                    />
-                    <Button onClick={addFirstMatch} className="purp-btn purp-btn-primary">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Coin
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
+            <div className="flex items-center gap-4">
+              {/* Timeframe segmented (top-right on desktop for chart; here for overall filter look) */}
+              <div className="pd-timeframe hidden md:flex">
+                {(["1min", "5min", "15min", "1h", "1d"] as TimeFrame[]).map((tf) => (
+                  <button
+                    key={tf}
+                    className={`pd-time-btn ${timeFrame === tf ? "active" : ""}`}
+                    onClick={() => setTimeFrame(tf)}
+                    aria-pressed={timeFrame === tf}
+                  >
+                    {tf}
+                  </button>
+                ))}
+              </div>
 
-              <CardContent className="p-0">
-                {sortedCoins.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-[var(--bg-tertiary)] z-10">
-                        <TableRow className="border-[var(--border-primary)]">
-                          <TableHead className="text-[color:var(--text-secondary)]">Asset</TableHead>
-                          <TableHead className="text-right text-[color:var(--text-secondary)]">Current Price</TableHead>
-                          <TableHead className="text-right text-[color:var(--text-secondary)]">
-                            {isRaceMode ? "Race %" : "% Since Start"}
-                          </TableHead>
-                          <TableHead className="text-right text-[color:var(--text-secondary)]">
-                            Rate of Change
-                          </TableHead>
-                          <TableHead className="text-right text-[color:var(--text-secondary)]">Daily %</TableHead>
-                          <TableHead className="text-center text-[color:var(--text-secondary)]">Momentum</TableHead>
-                          <TableHead className="text-center text-[color:var(--text-secondary)]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sortedCoins.map((coin, index) => (
-                          <TableRow key={coin.id} className="border-[var(--border-primary)] tr-hover">
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="size-8 rounded-full grid place-items-center text-white text-sm font-semibold"
-                                  style={{ backgroundColor: COIN_COLORS[index % COIN_COLORS.length] }}
-                                  aria-hidden="true"
-                                >
-                                  {coin.symbol.charAt(0)}
-                                </div>
-                                <div>
-                                  <div className="font-semibold">{coin.symbol}</div>
-                                  <div className="text-xs text-slate-400">{coin.name}</div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right font-mono">${formatPrice(coin.currentPrice)}</TableCell>
-                            <TableCell className="text-right">
-                              <span
-                                className={`font-semibold ${
-                                  coin.changesSinceStart > 0
-                                    ? "text-[color:var(--accent-success)]"
-                                    : coin.changesSinceStart < 0
-                                      ? "text-[#ff4757]"
-                                      : "text-[color:var(--text-secondary)]"
-                                }`}
-                              >
-                                {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="inline-flex items-center gap-1">
-                                {Math.abs(coin.rateOfChange) > 0.1 &&
-                                  (coin.rateOfChange > 0 ? (
-                                    <TrendingUp
-                                      className="h-3 w-3 text-[color:var(--accent-success)]"
-                                      aria-hidden="true"
-                                    />
-                                  ) : (
-                                    <TrendingDown className="h-3 w-3 text-[#ff4757]" aria-hidden="true" />
-                                  ))}
-                                <span
-                                  className={`text-sm ${
-                                    Math.abs(coin.rateOfChange) > 0.5
-                                      ? coin.rateOfChange > 0
-                                        ? "text-[color:var(--accent-success)]"
-                                        : "text-[#ff4757]"
-                                      : "text-[color:var(--text-secondary)]"
-                                  }`}
-                                >
-                                  {coin.rateOfChange.toFixed(2)}%/min
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span
-                                className={
-                                  coin.dailyChange > 0 ? "text-[color:var(--accent-success)]" : "text-[#ff4757]"
-                                }
-                              >
-                                {formatPercentage(coin.dailyChange)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <MiniSparkline
-                                data={coin.priceHistory.slice(-20).map((p) => p.price)}
-                                isPositive={coin.changesSinceStart > 0}
-                              />
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-100">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-slate-900 border-slate-700">
-                                  <DropdownMenuItem
-                                    onClick={() => removeCoin(coin.id)}
-                                    className="text-red-400 focus:text-red-400 focus:bg-slate-800"
-                                  >
-                                    <X className="mr-2 h-4 w-4" />
-                                    Remove
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="py-16 text-center">
-                    <div className="mx-auto size-16 rounded-full bg-slate-800 grid place-items-center mb-4">
-                      <Plus className="h-7 w-7 text-slate-400" />
-                    </div>
-                    <div className="text-lg font-medium">Start Building Your Watchlist</div>
-                    <div className="text-slate-400 text-sm mt-1">Search and add coins to get started.</div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="chart">
-            <Card className="bg-[var(--bg-secondary)] border-[var(--border-primary)]">
-              <CardHeader className="border-b border-[var(--border-primary)]">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      onClick={() => setActiveTab("table")}
-                      className="text-slate-300 hover:text-slate-100"
-                    >
-                      ← Back to Table
-                    </Button>
-                    <div>
-                      <CardTitle className="text-base">Momentum Chart</CardTitle>
-                      <CardDescription>Normalized performance since start</CardDescription>
-                    </div>
-                  </div>
-
-                  {/* Timeframe moved to chart header (top-right on desktop, natural flow on mobile) */}
-                  <div className="flex items-center gap-1 border border-[var(--border-primary)] rounded-lg p-1 bg-[var(--bg-primary)]">
-                    {(["1min", "5min", "15min", "1h", "1d"] as TimeFrame[]).map((tf) => (
-                      <Button
-                        key={tf}
-                        size="sm"
-                        variant={timeFrame === tf ? "default" : "ghost"}
-                        onClick={() => setTimeFrame(tf)}
-                        className={
-                          timeFrame === tf
-                            ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                            : "text-[color:var(--text-secondary)] hover:text-[var(--text-primary)]"
-                        }
-                        aria-pressed={timeFrame === tf}
-                      >
-                        {tf}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="h-[28rem] p-0">
-                <div className="h-full">
-                  <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Fallback Add Dialog (optional selector when no query) */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700">
-          <DialogHeader>
-            <DialogTitle>Add Coin to Watchlist</DialogTitle>
-            <DialogDescription>Pick from popular assets.</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="h-64">
-            <div className="grid grid-cols-1 gap-2">
-              {MOCK_COINS.filter((c) => !symbols.includes(c.symbol)).map((coin) => (
-                <Button
-                  key={coin.symbol}
-                  variant="ghost"
-                  className="justify-start h-auto py-3"
-                  onClick={() => {
-                    addCoin(coin)
-                    setIsAddModalOpen(false)
-                  }}
+              <div className="pd-view-toggle">
+                <button
+                  className={`pd-view-btn ${activeTab === "table" ? "active" : ""}`}
+                  onClick={() => setActiveTab("table")}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-slate-700 text-white text-sm font-semibold grid place-items-center">
-                      {coin.symbol.charAt(0)}
-                    </div>
-                    <div className="text-left">
-                      <div className="font-medium">{coin.symbol}</div>
-                      <div className="text-xs text-slate-400">{coin.name}</div>
-                    </div>
+                  <LayoutList className="h-4 w-4" />
+                  Table
+                </button>
+                <button
+                  className={`pd-view-btn ${activeTab === "chart" ? "active" : ""}`}
+                  onClick={() => setActiveTab("chart")}
+                >
+                  <LineChart className="h-4 w-4" />
+                  Chart
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          {activeTab === "chart" ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  onClick={() => setActiveTab("table")}
+                >
+                  ← Back to Table
+                </button>
+                <div className="pd-timeframe md:hidden">
+                  {(["1min", "5min", "15min", "1h", "1d"] as TimeFrame[]).map((tf) => (
+                    <button
+                      key={tf}
+                      className={`pd-time-btn ${timeFrame === tf ? "active" : ""}`}
+                      onClick={() => setTimeFrame(tf)}
+                    >
+                      {tf}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div
+                className="rounded-xl border border-[var(--border-primary)]"
+                style={{
+                  background: "linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))",
+                  height: "28rem",
+                }}
+              >
+                <RaceChart coins={sortedCoins} startTime={watchlistData.startTime} timeFrame={timeFrame} />
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              {sortedCoins.length > 0 ? (
+                <table className="pd-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th className="text-right">Current Price</th>
+                      <th className="text-right" title="Price change since ROC start">
+                        ROC Since Start
+                      </th>
+                      <th className="text-right" title="Current rate of change per minute">
+                        Current ROC Rate
+                      </th>
+                      <th className="text-right" title="24 hour price change">
+                        24h Change
+                      </th>
+                      <th className="text-center" title="Momentum">
+                        Status
+                      </th>
+                      <th className="text-center">Chart</th>
+                      <th className="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedCoins.map((coin, index) => (
+                      <tr key={coin.id}>
+                        <td>
+                          <div className="pd-asset">
+                            <div
+                              className="pd-asset-icon"
+                              style={{
+                                background: `linear-gradient(135deg, ${COIN_COLORS[index % COIN_COLORS.length]}, #2f323f)`,
+                              }}
+                            >
+                              {coin.symbol.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="pd-asset-name">{coin.symbol}</div>
+                              <div className="pd-asset-sub">{coin.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right">
+                          <span className="pd-price">${formatPrice(coin.currentPrice)}</span>
+                        </td>
+                        <td className="text-right">
+                          <span
+                            className={
+                              watchlistData.startTime
+                                ? `font-extrabold ${coin.changesSinceStart > 0 ? "momentum-positive" : coin.changesSinceStart < 0 ? "momentum-negative" : "momentum-neutral"}`
+                                : "momentum-neutral"
+                            }
+                          >
+                            {watchlistData.startTime ? formatPercentage(coin.changesSinceStart) : "—"}
+                          </span>
+                        </td>
+                        <td className="text-right">
+                          <span
+                            className={`font-semibold ${
+                              Math.abs(coin.rateOfChange) > 0.5
+                                ? coin.rateOfChange > 0
+                                  ? "momentum-positive"
+                                  : "momentum-negative"
+                                : "momentum-neutral"
+                            }`}
+                          >
+                            {coin.rateOfChange.toFixed(2)}%/min
+                          </span>
+                        </td>
+                        <td className="text-right">
+                          <span className={coin.dailyChange >= 0 ? "momentum-positive" : "momentum-negative"}>
+                            {formatPercentage(coin.dailyChange)}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <span
+                            className={`momentum-badge ${
+                              Math.abs(coin.changesSinceStart) > 5
+                                ? "badge-hot"
+                                : Math.abs(coin.changesSinceStart) > 2
+                                  ? "badge-active"
+                                  : Math.abs(coin.changesSinceStart) > 0.5
+                                    ? "badge-positive"
+                                    : "badge-moderate"
+                            }`}
+                          >
+                            {Math.abs(coin.changesSinceStart) > 5
+                              ? "HOT"
+                              : Math.abs(coin.changesSinceStart) > 2
+                                ? "ACTIVE"
+                                : Math.abs(coin.changesSinceStart) > 0.5
+                                  ? "RISING"
+                                  : "STABLE"}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          {/* Mini sparkline */}
+                          <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
+                            {(() => {
+                              const data = coin.priceHistory.slice(-20).map((p) => p.price)
+                              if (data.length < 2) return <></>
+                              const min = Math.min(...data)
+                              const max = Math.max(...data)
+                              const range = max - min || 1
+                              const pts = data
+                                .map((v, i) => {
+                                  const x = (i / (data.length - 1)) * 60
+                                  const y = 18 - ((v - min) / range) * 14
+                                  return `${x},${y}`
+                                })
+                                .join(" ")
+                              const color =
+                                coin.changesSinceStart > 5
+                                  ? "var(--accent-hot)"
+                                  : coin.changesSinceStart > 2
+                                    ? "var(--accent-cyan)"
+                                    : coin.changesSinceStart > 0
+                                      ? "var(--accent-success)"
+                                      : "var(--text-muted)"
+                              return (
+                                <>
+                                  <polyline points={pts} stroke={color} strokeWidth="1.5" fill="none" />
+                                  <circle
+                                    cx="60"
+                                    cy={18 - ((data[data.length - 1] - min) / range) * 14}
+                                    r="1.5"
+                                    fill={color}
+                                  />
+                                </>
+                              )
+                            })()}
+                          </svg>
+                        </td>
+                        <td className="text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="pd-btn pd-btn-primary">
+                                <MoreHorizontal className="h-4 w-4" />
+                                Actions
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="bg-[var(--bg-secondary)] border-[color:var(--border-primary)]">
+                              <DropdownMenuItem
+                                onClick={() => removeCoin(coin.id)}
+                                className="focus:bg-[var(--bg-hover)] focus:text-white"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="py-16 text-center">
+                  <div className="mx-auto size-16 rounded-full bg-[var(--bg-tertiary)] grid place-items-center mb-4">
+                    <Plus className="h-7 w-7 text-[var(--text-secondary)]" />
                   </div>
-                </Button>
-              ))}
-              {MOCK_COINS.filter((c) => !symbols.includes(c.symbol)).length === 0 && (
-                <div className="text-center py-8 text-slate-400 text-sm">All demo coins added</div>
+                  <div className="text-lg font-medium">Start Building Your Watchlist</div>
+                  <div className="text-[var(--text-secondary)] text-sm mt-1">Search and add coins to get started.</div>
+                </div>
               )}
             </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
+          )}
+        </div>
 
-// Mini sparkline
-function MiniSparkline({ data, isPositive }: { data: number[]; isPositive: boolean }) {
-  if (data.length < 2) return <div className="w-16 h-6" />
-  const min = Math.min(...data)
-  const max = Math.max(...data)
-  const range = max - min || 1
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * 60
-      const y = 20 - ((v - min) / range) * 16
-      return `${x},${y}`
-    })
-    .join(" ")
-  return (
-    <svg width="60" height="20" className="inline-block">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={isPositive ? "#10b981" : "#ef4444"}
-        strokeWidth="1.5"
-        opacity="0.9"
-      />
-    </svg>
+        {/* Fallback Add Dialog */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className="sm:max-w-md bg-[var(--bg-secondary)] border-[color:var(--border-primary)]">
+            <DialogHeader>
+              <DialogTitle className="text-[var(--text-primary)]">Add Coin to Watchlist</DialogTitle>
+              <DialogDescription className="text-[var(--text-secondary)]">Pick from popular assets.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-64">
+              <div className="grid grid-cols-1 gap-2">
+                {MOCK_COINS.filter((c) => !symbols.includes(c.symbol)).map((coin) => (
+                  <button
+                    key={coin.symbol}
+                    className="text-left p-3 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--bg-hover)] transition-colors"
+                    onClick={() => {
+                      addCoin(coin)
+                      setIsAddModalOpen(false)
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-full bg-[var(--bg-hover)] text-white text-sm font-semibold grid place-items-center">
+                        {coin.symbol.charAt(0)}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold">{coin.symbol}</div>
+                        <div className="text-xs text-[var(--text-secondary)]">{coin.name}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {MOCK_COINS.filter((c) => !symbols.includes(c.symbol)).length === 0 && (
+                  <div className="text-center py-8 text-[var(--text-secondary)] text-sm">All demo coins added</div>
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
   )
 }
